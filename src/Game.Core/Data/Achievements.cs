@@ -2,6 +2,10 @@ using Game.Core.Domain;
 
 namespace Game.Core.Data;
 
+// NOTE: threshold tiers below mirror the original idle-baking genre's
+// achievement pacing (a mechanic/numeric detail — see NOTICE.md). All
+// achievement *names* are original wording written for this remake.
+
 /// <summary>
 /// Static catalog of achievements. Families:
 ///
@@ -12,6 +16,29 @@ namespace Game.Core.Data;
 /// </summary>
 public static class Achievements
 {
+    // Short-scale magnitude words keyed by 1000^tier. Declared before All so
+    // it is initialized before BuildAll() runs (static fields init in order).
+    // Used only to derive achievement *names* from a threshold's order of
+    // magnitude — these are standard English scale terms, not game text.
+    private static readonly Dictionary<int, string> MagnitudeWords = new()
+    {
+        [2] = "million",
+        [3] = "billion",
+        [4] = "trillion",
+        [5] = "quadrillion",
+        [6] = "quintillion",
+        [7] = "sextillion",
+        [8] = "septillion",
+        [9] = "octillion",
+        [10] = "nonillion",
+        [11] = "decillion",
+        [12] = "undecillion",
+        [13] = "duodecillion",
+        [14] = "tredecillion",
+        [15] = "quattuordecillion",
+        [16] = "quindecillion",
+    };
+
     public static readonly IReadOnlyList<AchievementDefinition> All = BuildAll();
 
     private static readonly Dictionary<string, AchievementDefinition> ById =
@@ -24,34 +51,44 @@ public static class Achievements
         var list = new List<AchievementDefinition>();
 
         // ---- Bake N cookies milestones (total baked this run) ----
-        (double Threshold, string Name)[] bakeMilestones =
-        [
-            (1,                    "First bite"),
-            (1_000,                "Kilo-baker"),
-            (100_000,              "Six-figure oven"),
-            (1_000_000,            "Millionaire baker"),
-            (100_000_000,          "Industrial scale"),
-            (1_000_000_000,        "Billion-cookie club"),
-            (100_000_000_000,      "Hundred-billion baker"),
-            (1_000_000_000_000,    "Trillion baker"),
-            (1e15,                 "Quadrillion baker"),
-            (1e18,                 "Cosmic baker"),
-            (1e21,                 "Sextillion baker"),
-            (1e24,                 "Septillion baker"),
-        ];
-        foreach (var (threshold, name) in bakeMilestones)
+        // Follows the original's ×10 / ×100 alternating ladder: a few named
+        // intro tiers, then a generated ramp from 1e6 up to 1e48. Names are
+        // derived from the magnitude (e.g. "Trillion baker"), never copied.
+        var bakeThresholds = new List<double> { 1, 1_000, 100_000 };
+        for (var exp = 6; exp <= 48;)
+        {
+            bakeThresholds.Add(Math.Pow(10, exp));
+            exp += 2;
+            if (exp > 48) break;
+            bakeThresholds.Add(Math.Pow(10, exp));
+            exp += 1;
+        }
+
+        var bakeIntroNames = new Dictionary<double, string>
+        {
+            [1] = "First bite",
+            [1_000] = "Kilo-baker",
+            [100_000] = "Six-figure oven",
+        };
+
+        foreach (var threshold in bakeThresholds)
         {
             var t = threshold; // capture
+            var name = bakeIntroNames.TryGetValue(threshold, out var intro)
+                ? intro
+                : BakerName(threshold);
             list.Add(new AchievementDefinition(
                 Id: $"baked_{threshold:0}",
                 Name: name,
                 Icon: "🍪",
-                Description: $"Bake {threshold:N0} cookies in total.",
+                Description: $"Bake {NumberFormat.Format(threshold)} cookie{(threshold == 1 ? "" : "s")} in total.",
                 IsUnlocked: s => s.TotalCookiesBaked >= t));
         }
 
         // ---- Own N of each building ----
-        int[] ownershipMilestones = [1, 50, 100, 150];
+        // Original ownership ladder: 1, then every 50 up to 600.
+        int[] ownershipMilestones =
+            [1, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600];
         foreach (var building in Buildings.All)
         {
             foreach (var count in ownershipMilestones)
@@ -156,5 +193,19 @@ public static class Achievements
             IsUnlocked: s => s.PrestigeLevel >= 100));
 
         return list;
+    }
+
+    /// <summary>
+    /// Builds an original "… baker" name from a power-of-ten threshold, e.g.
+    /// 1e12 → "Trillion baker", 1e14 → "Hundred-trillion baker".
+    /// </summary>
+    private static string BakerName(double threshold)
+    {
+        var exp = (int)Math.Round(Math.Log10(threshold));
+        var tier = exp / 3;
+        var remainder = exp % 3;
+        var word = MagnitudeWords.TryGetValue(tier, out var w) ? w : "cosmic";
+        var name = char.ToUpperInvariant(word[0]) + word[1..];
+        return remainder == 2 ? $"Hundred-{word} baker" : $"{name} baker";
     }
 }

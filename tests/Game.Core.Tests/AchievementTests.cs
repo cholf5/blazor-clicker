@@ -50,4 +50,58 @@ public class AchievementTests
         s.Tick(0.001);
         Assert.Contains("clicks_100", s.UnlockedAchievements);
     }
+
+    [Fact]
+    public void OwningHighBuildingCount_UnlocksTopTierOwnAchievement()
+    {
+        // 600× ownership is the highest building tier. Seed enough cookies to
+        // afford 600 cursors, then buy them.
+        var s = new GameState { Cookies = double.MaxValue };
+        for (var i = 0; i < 600; i++) s.BuyBuilding(BuildingId.Cursor);
+        s.Tick(0.001);
+
+        Assert.Equal(600, s.BuildingCounts[BuildingId.Cursor]);
+        Assert.Contains("own_Cursor_600", s.UnlockedAchievements);
+        Assert.Contains("own_Cursor_550", s.UnlockedAchievements);
+    }
+
+    [Fact]
+    public void HighBakeMilestone_UnlocksTrillionTier()
+    {
+        // TotalCookiesBaked has a private setter, so seed it via a save load.
+        var s = LoadWithTotalBaked(1_000_000_000_000); // 1e12
+        s.Tick(0.001);
+        Assert.Contains("baked_1000000000000", s.UnlockedAchievements);
+    }
+
+    [Fact]
+    public void BakeMilestone_BelowThreshold_StaysLocked()
+    {
+        var s = LoadWithTotalBaked(999_999_999_999); // just under 1e12
+        s.Tick(0.001);
+        Assert.DoesNotContain("baked_1000000000000", s.UnlockedAchievements);
+    }
+
+    // Builds a GameState with a specific lifetime-baked total by round-tripping
+    // through the save system (TotalCookiesBaked is not directly settable).
+    private static GameState LoadWithTotalBaked(double total)
+    {
+        var json = $$"""
+        {
+          "Version": 1,
+          "Cookies": {{total:0}},
+          "TotalCookiesBaked": {{total:0}},
+          "HandmadeClicks": 0,
+          "GoldenCookiesClicked": 0,
+          "GameTime": 0,
+          "BuildingCounts": {},
+          "PurchasedUpgrades": [],
+          "UnlockedAchievements": [],
+          "Buffs": [],
+          "ActiveGolden": null,
+          "NextGoldenAt": 100
+        }
+        """;
+        return SaveSystem.DeserializeFromJson(json);
+    }
 }

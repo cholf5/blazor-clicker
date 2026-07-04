@@ -22,6 +22,11 @@ public static class NumberFormat
         " octillion",
         " nonillion",
         " decillion",
+        " undecillion",
+        " duodecillion",
+        " tredecillion",
+        " quattuordecillion",
+        " quindecillion",
     ];
 
     /// <summary>
