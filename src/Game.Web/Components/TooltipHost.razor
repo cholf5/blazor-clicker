@@ -1,0 +1,39 @@
+@* Single, app-wide tooltip layer. Lives at the top of MainLayout so its
+   `position: fixed` card is never clipped by scroll containers or covered by
+   scrollbars. Subscribes to TooltipService and repositions next to the cursor
+   after each render via a tiny JS helper. *@
+
+@implements IDisposable
+@inject TooltipService Ts
+@inject IJSRuntime Js
+
+@if (Ts.Visible && Ts.Content is not null)
+{
+    <div class="tooltip-layer" @ref="_el">
+        @Ts.Content
+    </div>
+}
+
+@code {
+    private ElementReference _el;
+
+    protected override void OnInitialized()
+    {
+        Ts.OnChange += HandleChange;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Anchor the card beside the hovered element after each render that
+        // shows one. It then stays put while the cursor moves over the anchor.
+        if (Ts.Visible && Ts.Content is not null)
+        {
+            try { await Js.InvokeVoidAsync("cookieClicker.positionTooltip", _el, Ts.Anchor); }
+            catch { /* ignore transient interop errors */ }
+        }
+    }
+
+    private void HandleChange() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Ts.OnChange -= HandleChange;
+}

@@ -1,0 +1,111 @@
+.tooltip-card {
+    min-width: 13rem;
+    max-width: 20rem;
+    padding: 0.6rem 0.75rem;
+    background: linear-gradient(180deg, rgba(48, 32, 16, 0.98), rgba(30, 20, 10, 0.98));
+    border: 1px solid rgba(255, 216, 87, 0.35);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    color: #f2e6cf;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+/* Per-category accent stripe on the left edge. */
+.tooltip-card.building { border-left: 3px solid #ffd857; }
+.tooltip-card.upgrade { border-left: 3px solid #8fd6ff; }
+.tooltip-card.achievement { border-left: 3px solid #ffa83c; }
+.tooltip-card.locked { border-left: 3px solid #6b4f2d; }
+
+.tooltip-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 0.35rem;
+}
+
+.tooltip-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.tooltip-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.tooltip-title {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #f7dfa8;
+}
+
+.tooltip-tag {
+    align-self: flex-start;
+    padding: 0.1rem 0.4rem;
+    background: rgba(255, 216, 87, 0.18);
+    border-radius: 0.3rem;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #ffd857;
+}
+
+/* Cost block, pinned top-right like the original game's tooltips. */
+.tooltip-cost {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.tooltip-cost-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.tooltip-cost-value {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #6cff6c;
+    text-shadow: 0 0 6px rgba(108, 255, 108, 0.35);
+}
+
+.tooltip-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.35rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.tooltip-row-label {
+    color: #a08765;
+}
+
+.tooltip-row-value {
+    color: #f2e6cf;
+    font-weight: 600;
+    text-align: right;
+}
+
+.tooltip-flavor {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-style: italic;
+    color: #b39868;
+    font-size: 0.75rem;
+}

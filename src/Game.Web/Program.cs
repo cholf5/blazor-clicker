@@ -16,5 +16,6 @@ builder.Services.AddSingleton<LocalStorageService>();
 builder.Services.AddSingleton<SaveCoordinator>();
 builder.Services.AddSingleton<GameLoop>();
 builder.Services.AddSingleton<AudioService>();
+builder.Services.AddScoped<TooltipService>();
 
 await builder.Build().RunAsync();

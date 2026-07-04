@@ -1,18 +1,22 @@
 @* One row in the building list. Handles buy / bulk-buy / affordability
    styling. Emits OnBuy for the parent to invoke on GameState. *@
 
+@inject TooltipService Tooltip
+
 @{
     var owned = State.BuildingCounts.GetValueOrDefault(Definition.Id);
     var unitCost = State.NextBuildingCost(Definition.Id);
     var bulkCost = BulkAmount > 1 ? State.BulkBuildingCost(Definition.Id, BulkAmount) : unitCost;
-    var canAffordUnit = State.Cookies >= unitCost;
     var canAffordBulk = State.Cookies >= bulkCost;
     var unitCps = State.GetBuildingUnitCps(Definition.Id);
     var totalCps = unitCps * owned;
 }
 
 <button class="building-row @(canAffordBulk ? "" : "locked")"
+        @ref="_row"
         @onclick="() => OnBuy.InvokeAsync(BulkAmount)"
+        @onmouseover="ShowTooltip"
+        @onmouseout="Tooltip.Hide"
         disabled="@(!canAffordBulk)">
     <span class="building-icon">@Definition.Icon</span>
     <span class="building-body">
@@ -21,7 +25,7 @@
             @NumberFormat.Format(bulkCost)
             @if (BulkAmount > 1) { <span class="bulk-tag">× @BulkAmount</span> }
         </span>
-        <span class="building-info" title="@Definition.FlavorText">
+        <span class="building-info">
             @if (owned > 0)
             {
                 <span>owns @owned</span>
@@ -41,4 +45,57 @@
     [Parameter, EditorRequired] public BuildingDefinition Definition { get; set; } = default!;
     [Parameter] public int BulkAmount { get; set; } = 1;
     [Parameter, EditorRequired] public EventCallback<int> OnBuy { get; set; }
+
+    private ElementReference _row;
+
+    private void ShowTooltip() => Tooltip.Show(BuildTooltip(), _row);
+
+    private RenderFragment BuildTooltip()
+    {
+        var owned = State.BuildingCounts.GetValueOrDefault(Definition.Id);
+        var unitCost = State.NextBuildingCost(Definition.Id);
+        var unitCps = State.GetBuildingUnitCps(Definition.Id);
+        var totalCps = unitCps * owned;
+        var globalCps = State.CurrentCps();
+
+        var rows = new List<(string, string)>
+        {
+            ("Owned", owned.ToString()),
+            ("Each produces", $"{NumberFormat.Format(unitCps)} cps"),
+        };
+
+        if (owned > 0)
+        {
+            rows.Add(("Total from these", $"{NumberFormat.Format(totalCps)} cps"));
+            if (globalCps > 0)
+            {
+                rows.Add(("Share of your cps", $"{totalCps / globalCps * 100:0.#}%"));
+            }
+        }
+
+        // How long one copy takes to pay for itself from its own output.
+        if (unitCps > 0)
+        {
+            rows.Add(("Pays for itself in", FormatSeconds(unitCost / unitCps)));
+        }
+
+        var costValue = NumberFormat.Format(BulkAmount > 1 ? State.BulkBuildingCost(Definition.Id, BulkAmount) : unitCost)
+            + (BulkAmount > 1 ? $" ×{BulkAmount}" : "");
+
+        return @<TooltipCard Icon="@Definition.Icon"
+                             Title="@Definition.Name"
+                             CssClass="building"
+                             Cost="@costValue"
+                             Rows="rows"
+                             Flavor="@Definition.FlavorText" />;
+    }
+
+    private static string FormatSeconds(double seconds)
+    {
+        if (!double.IsFinite(seconds)) return "—";
+        if (seconds < 60) return $"{seconds:0.#} s";
+        if (seconds < 3600) return $"{seconds / 60:0.#} min";
+        if (seconds < 86400) return $"{seconds / 3600:0.#} h";
+        return $"{seconds / 86400:0.#} d";
+    }
 }

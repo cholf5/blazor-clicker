@@ -1,0 +1,54 @@
+@* Reusable rich-tooltip card. Shared by buildings, upgrades and achievements
+   via the TooltipService. Structure is "head (icon + title + tag) → rows →
+   flavour"; every section is optional so each caller fills only what it has. *@
+
+<div class="tooltip-card @CssClass">
+    <div class="tooltip-head">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <span class="tooltip-icon">@Icon</span>
+        }
+        <span class="tooltip-titles">
+            <span class="tooltip-title">@Title</span>
+            @if (!string.IsNullOrEmpty(Tag))
+            {
+                <span class="tooltip-tag">@Tag</span>
+            }
+        </span>
+        @if (!string.IsNullOrEmpty(Cost))
+        {
+            <span class="tooltip-cost">
+                <span class="tooltip-cost-icon">🍪</span>
+                <span class="tooltip-cost-value">@Cost</span>
+            </span>
+        }
+    </div>
+
+    @if (Rows is { Count: > 0 })
+    {
+        <div class="tooltip-rows">
+            @foreach (var (label, value) in Rows)
+            {
+                <div class="tooltip-row">
+                    <span class="tooltip-row-label">@label</span>
+                    <span class="tooltip-row-value">@value</span>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Flavor))
+    {
+        <div class="tooltip-flavor">@Flavor</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Tag { get; set; }
+    [Parameter] public string? Cost { get; set; }
+    [Parameter] public IReadOnlyList<(string Label, string Value)>? Rows { get; set; }
+    [Parameter] public string? Flavor { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+}

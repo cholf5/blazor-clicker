@@ -1,0 +1,9 @@
+.tooltip-layer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 9999;
+    pointer-events: none;
+    /* Positioned by JS; start off-screen to avoid a flash at (0,0). */
+    transform: translateZ(0);
+}

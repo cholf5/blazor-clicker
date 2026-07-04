@@ -1,6 +1,8 @@
 @* Grid of upgrade buttons — only visible upgrades (unlocked, not owned)
    appear, sorted by cost. Grayed-out when unaffordable. *@
 
+@inject TooltipService Tooltip
+
 <section class="upgrade-store">
     <header class="upgrade-header">
         <h2>Upgrades</h2>
@@ -18,9 +20,11 @@
             {
                 var affordable = State.Cookies >= up.Cost;
                 <button class="upgrade-tile @(affordable ? "" : "locked")"
+                        @ref="_tiles[up.Id]"
                         disabled="@(!affordable)"
                         @onclick="() => Buy(up.Id)"
-                        title="@up.Name — @up.Description (@NumberFormat.Format(up.Cost) cookies)">
+                        @onmouseover="() => Tooltip.Show(BuildTooltip(up), _tiles[up.Id])"
+                        @onmouseout="Tooltip.Hide">
                     <span class="upgrade-icon">@up.Icon</span>
                     <span class="upgrade-cost">@NumberFormat.Format(up.Cost)</span>
                 </button>
@@ -35,6 +39,9 @@
 
     private List<UpgradeDefinition> _available = new();
 
+    // Per-tile element refs so the tooltip can anchor beside the hovered tile.
+    private readonly Dictionary<string, ElementReference> _tiles = new();
+
     protected override void OnParametersSet()
     {
         _available = State.AvailableUpgrades().ToList();
@@ -42,6 +49,37 @@
 
     private async Task Buy(string id)
     {
-        if (State.BuyUpgrade(id)) await OnPurchased.InvokeAsync();
+        if (State.BuyUpgrade(id))
+        {
+            Tooltip.Hide();
+            await OnPurchased.InvokeAsync();
+        }
     }
+
+    private RenderFragment BuildTooltip(UpgradeDefinition up)
+    {
+        var rows = new List<(string, string)>
+        {
+            ("Effect", EffectText(up)),
+        };
+
+        return @<TooltipCard Icon="@up.Icon"
+                             Title="@up.Name"
+                             Tag="@up.Category.ToString()"
+                             CssClass="upgrade"
+                             Cost="@NumberFormat.Format(up.Cost)"
+                             Rows="rows"
+                             Flavor="@up.Description" />;
+    }
+
+    private static string EffectText(UpgradeDefinition up) => up.EffectKind switch
+    {
+        UpgradeEffectKind.BuildingMultiplier =>
+            $"×{up.EffectValue:0.##} {(up.TargetBuilding is { } b ? Buildings.Get(b).Name : "building")} output",
+        UpgradeEffectKind.ClickMultiplier => $"×{up.EffectValue:0.##} click power",
+        UpgradeEffectKind.GlobalCpsMultiplier => $"×{up.EffectValue:0.##} all production",
+        UpgradeEffectKind.CursorPerNonCursorBuilding =>
+            $"+{NumberFormat.Format(up.EffectValue)} cursor cps per non-cursor building",
+        _ => up.Description,
+    };
 }

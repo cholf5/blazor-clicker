@@ -92,4 +92,35 @@
         setTimeout(() => playTone(1174, 420, 'sine', 0.35), 560);
     };
 
+    // ---- Tooltip positioning --------------------------------------------
+    //
+    // The C# TooltipHost renders a `position: fixed` layer; we place it beside
+    // the hovered element (original-game style) so it stays still while the
+    // cursor moves over that element. We prefer the right side of the anchor,
+    // flipping to the left when it would overflow, and clamp vertically so the
+    // card never spills off-screen.
+    window.cookieClicker.positionTooltip = function (el, anchor) {
+        if (!el || !anchor) return;
+        const gap = 10, margin = 8;
+        const a = anchor.getBoundingClientRect();
+        const w = el.offsetWidth, h = el.offsetHeight;
+
+        // Horizontal: to the right of the anchor, else to its left.
+        let x = a.right + gap;
+        if (x + w > window.innerWidth - margin) {
+            x = a.left - gap - w;
+        }
+        if (x < margin) x = margin;
+
+        // Vertical: align the top with the anchor, then clamp into view.
+        let y = a.top;
+        if (y + h > window.innerHeight - margin) {
+            y = window.innerHeight - margin - h;
+        }
+        if (y < margin) y = margin;
+
+        el.style.left = x + 'px';
+        el.style.top = y + 'px';
+    };
+
 })();

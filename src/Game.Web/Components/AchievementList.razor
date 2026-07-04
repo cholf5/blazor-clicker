@@ -1,5 +1,7 @@
 @* Grid of every achievement in the game. Locked ones show as silhouettes. *@
 
+@inject TooltipService Tooltip
+
 <section class="achievements">
     <header class="achievements-header">
         <h2>Achievements</h2>
@@ -11,7 +13,9 @@
         {
             var unlocked = State.UnlockedAchievements.Contains(ach.Id);
             <div class="achievement-tile @(unlocked ? "unlocked" : "locked")"
-                 title="@(unlocked ? $"{ach.Name} — {ach.Description}" : "???")">
+                 @ref="_tiles[ach.Id]"
+                 @onmouseover="() => Tooltip.Show(BuildTooltip(ach, unlocked), _tiles[ach.Id])"
+                 @onmouseout="Tooltip.Hide">
                 <span class="achievement-icon">@(unlocked ? ach.Icon : "🔒")</span>
             </div>
         }
@@ -20,4 +24,19 @@
 
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    // Per-tile element refs so the tooltip can anchor beside the hovered tile.
+    private readonly Dictionary<string, ElementReference> _tiles = new();
+
+    private RenderFragment BuildTooltip(AchievementDefinition ach, bool unlocked)
+    {
+        if (!unlocked)
+        {
+            return @<TooltipCard Icon="🔒" Title="???" CssClass="locked"
+                                 Flavor="This achievement is still locked." />;
+        }
+
+        return @<TooltipCard Icon="@ach.Icon" Title="@ach.Name" Tag="Unlocked"
+                             CssClass="achievement" Flavor="@ach.Description" />;
+    }
 }
