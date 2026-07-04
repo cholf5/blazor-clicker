@@ -24,6 +24,57 @@
     font-weight: 700;
 }
 
+.achievement-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
+}
+
+.achievement-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.4rem;
+    color: #cbb78e;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.achievement-tab:hover {
+    background: rgba(255, 216, 87, 0.1);
+    border-color: rgba(255, 216, 87, 0.3);
+}
+
+.achievement-tab.active {
+    background: linear-gradient(180deg, rgba(255, 216, 87, 0.22), rgba(255, 165, 60, 0.22));
+    border-color: rgba(255, 216, 87, 0.6);
+    color: #ffe9a8;
+}
+
+.achievement-tab.complete .tab-icon {
+    filter: drop-shadow(0 0 3px rgba(255, 216, 87, 0.9));
+}
+
+.achievement-tab .tab-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.achievement-tab .tab-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #9c8a63;
+}
+
+.achievement-tab.active .tab-count {
+    color: #ffd857;
+}
+
 .achievement-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(2.4rem, 1fr));

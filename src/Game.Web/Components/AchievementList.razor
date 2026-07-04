@@ -1,4 +1,5 @@
-@* Grid of every achievement in the game. Locked ones show as silhouettes. *@
+@* Grid of every achievement in the game, grouped into filterable tabs.
+   Locked ones show as silhouettes. *@
 
 @inject TooltipService Tooltip
 
@@ -8,8 +9,28 @@
         <span class="achievements-count">@State.UnlockedAchievements.Count / @Achievements.All.Count</span>
     </header>
 
+    <nav class="achievement-tabs">
+        <button class="achievement-tab @(_selected is null ? "active" : "")"
+                @onclick="() => Select(null)">
+            <span class="tab-icon">🏆</span>
+            <span class="tab-count">@State.UnlockedAchievements.Count/@Achievements.All.Count</span>
+        </button>
+        @foreach (var cat in AchievementCategories.All)
+        {
+            var c = cat;
+            var total = CountIn(c);
+            var unlocked = CountUnlockedIn(c);
+            <button class="achievement-tab @(_selected?.Key == c.Key ? "active" : "") @(unlocked == total ? "complete" : "")"
+                    title="@c.Label"
+                    @onclick="() => Select(c)">
+                <span class="tab-icon">@c.Icon</span>
+                <span class="tab-count">@unlocked/@total</span>
+            </button>
+        }
+    </nav>
+
     <div class="achievement-grid">
-        @foreach (var ach in Achievements.All)
+        @foreach (var ach in VisibleAchievements)
         {
             var unlocked = State.UnlockedAchievements.Contains(ach.Id);
             <div class="achievement-tile @(unlocked ? "unlocked" : "locked")"
@@ -27,6 +48,22 @@
 
     // Per-tile element refs so the tooltip can anchor beside the hovered tile.
     private readonly Dictionary<string, ElementReference> _tiles = new();
+
+    // Null = "All" tab; otherwise the currently selected category.
+    private AchievementCategory? _selected;
+
+    private IEnumerable<AchievementDefinition> VisibleAchievements =>
+        _selected is null
+            ? Achievements.All
+            : Achievements.All.Where(a => _selected.Matches(a.Id));
+
+    private void Select(AchievementCategory? category) => _selected = category;
+
+    private int CountIn(AchievementCategory category) =>
+        Achievements.All.Count(a => category.Matches(a.Id));
+
+    private int CountUnlockedIn(AchievementCategory category) =>
+        Achievements.All.Count(a => category.Matches(a.Id) && State.UnlockedAchievements.Contains(a.Id));
 
     private RenderFragment BuildTooltip(AchievementDefinition ach, bool unlocked)
     {
