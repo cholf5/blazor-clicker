@@ -1,0 +1,43 @@
+@* "Welcome back" dialog shown after loading a save whose timestamp
+   indicates the player was away for at least a threshold amount of time. *@
+
+@if (Summary is { } s)
+{
+    <div class="offline-backdrop" @onclick="Dismiss">
+        <div class="offline-dialog" @onclick:stopPropagation="true">
+            <h2>🎉 Welcome back!</h2>
+            <p class="offline-elapsed">You were away for <strong>@FormatElapsed(s.Seconds)</strong>.</p>
+            <p class="offline-earned">
+                Your bakery kept working at <strong>@((s.Efficiency * 100).ToString("0"))%</strong>
+                efficiency and produced:
+            </p>
+            <div class="offline-amount">+@NumberFormat.Format(s.CookiesEarned) 🍪</div>
+            @if (s.SugarLumpHarvestReady)
+            {
+                <p class="offline-lump">A sugar lump ripened while you were away — go harvest it!</p>
+            }
+            <button class="offline-btn" @onclick="Dismiss">Continue baking</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public OfflineEarningsSummary? Summary { get; set; }
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    private async Task Dismiss() => await OnDismiss.InvokeAsync();
+
+    private static string FormatElapsed(double seconds)
+    {
+        if (seconds < 60) return $"{(int)seconds}s";
+        if (seconds < 3600)
+        {
+            var m = (int)(seconds / 60);
+            var s = (int)(seconds % 60);
+            return s > 0 ? $"{m}m {s}s" : $"{m}m";
+        }
+        var h = (int)(seconds / 3600);
+        var mm = (int)((seconds % 3600) / 60);
+        return mm > 0 ? $"{h}h {mm}m" : $"{h}h";
+    }
+}

@@ -1,0 +1,69 @@
+@* A small widget shown once the player has baked enough cookies to
+   unlock sugar lumps. Displays the current stockpile, a growth progress
+   bar, and a big harvest button that lights up when ripe. *@
+
+@inject AudioService Audio
+
+@if (Show)
+{
+    <section class="sugar-lump">
+        <header class="sugar-lump-header">
+            <h3>Sugar lumps</h3>
+            <span class="sugar-lump-count">🍬 @State.SugarLumps</span>
+        </header>
+
+        @if (State.SugarLumpReady)
+        {
+            <button class="sugar-lump-btn ripe" @onclick="Harvest" title="Harvest this sugar lump">
+                <span class="sugar-lump-emoji">🍬</span>
+                <span class="sugar-lump-label">Harvest ripe lump</span>
+            </button>
+        }
+        else
+        {
+            <div class="sugar-lump-progress" title="@Tooltip">
+                <div class="sugar-lump-progress-fill" style="width: @Progress.ToString("0.##")%"></div>
+                <div class="sugar-lump-progress-label">Growing… @RemainingText</div>
+            </div>
+        }
+
+        <p class="sugar-lump-blurb">Each lump grants a permanent +@((ProgressionConfig.SugarLumpCpsBonus * 100).ToString("0.#"))% CPS bonus.</p>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private double Progress
+    {
+        get
+        {
+            var total = ProgressionConfig.SugarLumpRipenSeconds;
+            var remaining = Math.Max(0, State.SugarLumpNextAt - State.GameTime);
+            return Math.Clamp(100.0 * (total - remaining) / total, 0, 100);
+        }
+    }
+
+    private string RemainingText
+    {
+        get
+        {
+            var remaining = Math.Max(0, State.SugarLumpNextAt - State.GameTime);
+            var mins = (int)(remaining / 60);
+            var secs = (int)(remaining % 60);
+            return mins > 0 ? $"{mins}m {secs:00}s" : $"{secs}s";
+        }
+    }
+
+    private string Tooltip =>
+        $"Next lump ripens in {RemainingText}. Sugar lumps are permanent CPS bonuses.";
+
+    private bool Show =>
+        State.AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold
+        || State.SugarLumps > 0;
+
+    private void Harvest()
+    {
+        if (State.HarvestSugarLump()) Audio.PlayAchievement();
+    }
+}

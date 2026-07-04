@@ -8,6 +8,7 @@
     <button class="save-btn" @onclick="OnExport" title="Copy save to clipboard">📤 Export</button>
     <button class="save-btn" @onclick="ToggleImport" title="Paste an exported save">📥 Import</button>
     <button class="save-btn danger" @onclick="OnWipe" title="Delete save and start over">🗑 Wipe</button>
+    <MuteButton />
 
     @if (_showImport)
     {

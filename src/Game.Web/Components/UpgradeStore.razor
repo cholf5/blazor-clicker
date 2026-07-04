@@ -19,7 +19,7 @@
                 var affordable = State.Cookies >= up.Cost;
                 <button class="upgrade-tile @(affordable ? "" : "locked")"
                         disabled="@(!affordable)"
-                        @onclick="() => State.BuyUpgrade(up.Id)"
+                        @onclick="() => Buy(up.Id)"
                         title="@up.Name — @up.Description (@NumberFormat.Format(up.Cost) cookies)">
                     <span class="upgrade-icon">@up.Icon</span>
                     <span class="upgrade-cost">@NumberFormat.Format(up.Cost)</span>
@@ -31,11 +31,17 @@
 
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter] public EventCallback OnPurchased { get; set; }
 
     private List<UpgradeDefinition> _available = new();
 
     protected override void OnParametersSet()
     {
         _available = State.AvailableUpgrades().ToList();
+    }
+
+    private async Task Buy(string id)
+    {
+        if (State.BuyUpgrade(id)) await OnPurchased.InvokeAsync();
     }
 }

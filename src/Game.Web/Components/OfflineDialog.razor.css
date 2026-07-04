@@ -1,0 +1,80 @@
+.offline-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 6, 2, 0.7);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+    animation: offline-fade 200ms ease-out;
+}
+
+.offline-dialog {
+    max-width: 420px;
+    background: linear-gradient(180deg, #3b2915 0%, #241608 100%);
+    border-radius: 12px;
+    padding: 22px 26px;
+    color: #ffedcf;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 1px #b6873c;
+    text-align: center;
+}
+
+.offline-dialog h2 {
+    margin: 0 0 10px 0;
+    font-size: 22px;
+    color: #ffdc86;
+}
+
+.offline-elapsed {
+    margin: 4px 0 6px 0;
+    font-size: 14px;
+    color: #d7bd8b;
+}
+
+.offline-earned {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: #cdb18b;
+    line-height: 1.4;
+}
+
+.offline-amount {
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffbb54;
+    margin: 8px 0 14px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.offline-lump {
+    margin: 8px 0;
+    padding: 8px 12px;
+    background: rgba(255, 180, 80, 0.12);
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: #ffcf80;
+}
+
+.offline-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #f0a94a 0%, #b3701f 100%);
+    color: #2a1804;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #6c410f, 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+.offline-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #6c410f, 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes offline-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

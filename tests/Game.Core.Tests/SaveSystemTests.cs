@@ -66,6 +66,50 @@ public class SaveSystemTests
         Assert.Throws<InvalidDataException>(() => SaveSystem.DeserializeFromJson(json));
     }
 
+    [Fact]
+    public void Migrate_V1Save_UpgradesToCurrentAndSeedsLifetimeBaked()
+    {
+        // Hand-rolled v1 save: only has the fields that existed at v1. The
+        // migration must preserve them, seed AllTimeCookiesBaked from the
+        // per-run counter, and leave the new v2 fields at their defaults.
+        var v1Json = """
+        {
+          "Version": 1,
+          "Cookies": 500,
+          "TotalCookiesBaked": 1234,
+          "HandmadeClicks": 10,
+          "GoldenCookiesClicked": 0,
+          "GameTime": 42.5,
+          "BuildingCounts": { "Cursor": 3 },
+          "PurchasedUpgrades": [],
+          "UnlockedAchievements": [],
+          "Buffs": [],
+          "ActiveGolden": null,
+          "NextGoldenAt": 100
+        }
+        """;
+
+        var state = SaveSystem.DeserializeFromJson(v1Json, out var savedAt);
+        Assert.Equal(0, savedAt); // v1 has no timestamp
+        Assert.Equal(500, state.Cookies);
+        Assert.Equal(1234, state.TotalCookiesBaked);
+        Assert.Equal(1234, state.AllTimeCookiesBaked); // seeded from run baked
+        Assert.Equal(3, state.BuildingCounts[BuildingId.Cursor]);
+        Assert.Equal(0, state.PrestigeLevel);
+        Assert.Equal(0, state.SugarLumps);
+        Assert.False(state.SugarLumpReady);
+    }
+
+    [Fact]
+    public void Serialize_StampsSavedAtUnixSeconds()
+    {
+        var s = new GameState { Cookies = 1 };
+        var json = SaveSystem.SerializeToJson(s);
+        SaveSystem.DeserializeFromJson(json, out var savedAt);
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        Assert.InRange(savedAt, now - 10, now + 10);
+    }
+
     // Expose ToSaveData for the test above without changing production visibility.
 }
 

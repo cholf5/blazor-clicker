@@ -63,35 +63,43 @@ cookie-clicker-remake/
 │   │   │   ├── UpgradeDefinition.cs
 │   │   │   ├── AchievementDefinition.cs
 │   │   │   ├── GoldenCookie.cs (含 ActiveBuff)
+│   │   │   ├── OfflineEarningsSummary.cs
+│   │   │   ├── ProgressionConfig.cs   糖块 / 转生 / 离线数值
 │   │   │   └── GameState.cs          核心状态 + 操作
 │   │   ├── Data/
-│   │   │   ├── Buildings.cs          12 座建筑
-│   │   │   ├── Upgrades.cs           ~55 条升级
-│   │   │   └── Achievements.cs       ~60 条成就
+│   │   │   ├── Buildings.cs          18 座建筑（含 6 座后期）
+│   │   │   ├── Upgrades.cs           ~80 条升级
+│   │   │   ├── Achievements.cs       ~90 条成就（含糖块 / 转生）
+│   │   │   └── NewsFlavor.cs         新闻栏 flavor 文案池
 │   │   ├── Formulas.cs               成本 / 批量公式
 │   │   ├── NumberFormat.cs           "1.23 million" 展示
-│   │   ├── SaveData.cs               版本化存档 DTO
-│   │   └── SaveSystem.cs             JSON + Base64 + migrate
+│   │   ├── SaveData.cs               版本化存档 DTO（v2）
+│   │   └── SaveSystem.cs             JSON + Base64 + 步进 migrate
 │   └── Game.Web/                     Blazor WASM
-│       ├── Pages/Home.razor          三栏 shell
+│       ├── Pages/Home.razor          三栏 shell + 粒子/浮字 + 离线弹窗
 │       ├── Components/               BigCookie, StatsPanel, BuildingList,
 │       │                             BuildingRow, UpgradeStore,
 │       │                             AchievementList, GoldenCookieLayer,
-│       │                             SaveMenu, AchievementToasts
+│       │                             SaveMenu, AchievementToasts,
+│       │                             SugarLumpWidget, AscendPanel,
+│       │                             NewsTicker, OfflineDialog, MuteButton
 │       ├── Services/
 │       │   ├── GameLoop.cs           30fps 定时器
 │       │   ├── LocalStorageService.cs
-│       │   └── SaveCoordinator.cs    加载 / 自动保存 / 导入 / 清档
+│       │   ├── AudioService.cs       静音持久化 + JS interop
+│       │   └── SaveCoordinator.cs    加载 / 自动保存 / 离线结算 / 导入 / 清档
 │       ├── Layout/MainLayout.razor
 │       ├── wwwroot/
+│       │   └── js/cookie-clicker.js  Web Audio 合成音效
 │       └── Program.cs
 ├── tests/
-│   └── Game.Core.Tests/              xUnit（33 用例：公式/购买/升级/成就/存档/金饼干）
+│   └── Game.Core.Tests/              xUnit（51 用例：公式/购买/升级/成就/存档/金饼干/糖块/转生/离线/迁移/新闻）
 ├── docs/
 │   ├── README.md                     文档索引
 │   ├── decisions/                    ADR
 │   │   ├── 0001-technology-stack.md
-│   │   └── 0002-implementation.md
+│   │   ├── 0002-implementation.md
+│   │   └── 0003-late-game-and-polish.md
 │   └── retrospectives/               交付复盘
 │       └── 0001-blazor-remake.md
 ├── .github/workflows/
@@ -170,13 +178,18 @@ dotnet publish src/Game.Web/Game.Web.csproj -c Release -o publish
 
 - [x] 技术选型决策
 - [x] M0 骨架搭建（Blazor solution + Game.Core + Game.Web + xUnit + CI）
-- [x] M1 建筑系统（12 座建筑 + 单/十/百批量购买 + 成本递增公式）
-- [x] M2 升级系统（每座建筑 4 档分级 + 3 档点击强化 + 3 档 Cursor 协同 + 2 档全局 CPS 加成）
-- [x] M3 成就系统（40+ 条 · 累计烘焙 / 拥有数 / 点击 / 金饼干 / 升级里程碑 · 解锁弹窗）
-- [x] M4 存档系统（版本化 JSON · localStorage 15s 自动保存 · Base64 导入导出 · 一键清档）
+- [x] M1 建筑系统（18 座建筑：早期 12 + 后期 6 · 单/十/百批量购买 · 成本递增公式）
+- [x] M2 升级系统（每座建筑 4 档分级 + 4 档点击强化 + 3 档 Cursor 协同 + 4 档全局 CPS 加成）
+- [x] M3 成就系统（90+ 条 · 累计烘焙 / 拥有数 / 点击 / 金饼干 / 升级 / 糖块 / 转生里程碑 · 解锁弹窗）
+- [x] M4 存档系统（版本化 JSON v2 · localStorage 15s 自动保存 · Base64 导入导出 · 步进迁移 · 一键清档）
 - [x] 金饼干（Lucky / Frenzy / Click Frenzy · 13s 存续 · 60-300s 冷却）
-- [ ] M5 更多特效（粒子、烘焙音效）
-- [ ] M6 打磨（第二阶段建筑 / 神殿 mini-game / 转生系统 …）
+- [x] **M5 后期系统 + 手感**（[ADR 0003](docs/decisions/0003-late-game-and-polish.md)）
+  - 音效（Web Audio 合成，无外部素材）+ 静音持久化
+  - 点击粒子（3-5 颗 emoji 碎屑）+ 浮字（`+N`）
+  - 滚动新闻栏（事件优先 + ambient flavor + 进度型 headline）
+  - 糖块系统（30 分钟成熟 · 每颗 +1% 永久 CPS）
+  - 转生 / Prestige（`cbrt(baked/1e12)` · 每级 +2% 永久 CPS · 保留成就/糖块）
+  - 离线收益（50% 效率 · 最多 24 小时 · 载入时"welcome back"弹窗）
 
 ---
 
@@ -187,5 +200,6 @@ dotnet publish src/Game.Web/Game.Web.csproj -c Release -o publish
 - **2026-07-04** M1–M4 + 金饼干全部完成，构成第一个可玩版本。`Game.Core` 领域层 ~600 行 C#，`Game.Web` UI 层 8 个组件 + 1 个 Home shell。**33/33 xUnit 测试通过**，`dotnet build Game.slnx -c Release` 0 警告 0 错误。实现思路和层级设计见 [ADR 0002](docs/decisions/0002-implementation.md)。
 - **2026-07-04** 用户在 Rider F5 实机验证："完全能玩"，无阻断性 bug。对这次交付做了复盘，拆出"真正起作用的 5 个条件"与"没那么神的 5 处诚实清单"，并给出复现配方。详见 [复盘 0001](docs/retrospectives/0001-blazor-remake.md)。
 - **2026-07-04** 为公开发布做仓库整理：清理逐字文案、加 NOTICE + LICENSE、把 Blazor 项目从 `blazor/` 子目录提升到根目录、移除原版参考代码副本、重置 git 历史。
+- **2026-07-04** M5 完成，补齐 ADR 0002 里明确推迟的音效 / 粒子 / 新闻栏 / 后期建筑（Antimatter condenser → Idleverse）/ 糖块 / 转生 / 离线收益。存档 schema 升到 v2，51/51 xUnit 全绿，`dotnet build Game.slnx` 0 警告 0 错误。设计取舍见 [ADR 0003](docs/decisions/0003-late-game-and-polish.md)。
 
 > 完整的 ADR 索引、复盘索引和文档结构见 [`docs/README.md`](docs/README.md)。

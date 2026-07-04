@@ -3,11 +3,12 @@ using Game.Core.Domain;
 namespace Game.Core.Data;
 
 /// <summary>
-/// Static catalog of achievements. Three families:
+/// Static catalog of achievements. Families:
 ///
-/// * "Bake N cookies" milestones
+/// * "Bake N cookies" milestones (across a run)
 /// * "Own N of a building" milestones
-/// * Miscellaneous — click counts, upgrades purchased, etc.
+/// * Miscellaneous — click counts, upgrades purchased, golden cookies
+/// * Meta — sugar lumps harvested, ascensions performed
 /// </summary>
 public static class Achievements
 {
@@ -22,7 +23,7 @@ public static class Achievements
     {
         var list = new List<AchievementDefinition>();
 
-        // ---- Bake N cookies milestones (total baked, not current bank) ----
+        // ---- Bake N cookies milestones (total baked this run) ----
         (double Threshold, string Name)[] bakeMilestones =
         [
             (1,                    "First bite"),
@@ -35,6 +36,8 @@ public static class Achievements
             (1_000_000_000_000,    "Trillion baker"),
             (1e15,                 "Quadrillion baker"),
             (1e18,                 "Cosmic baker"),
+            (1e21,                 "Sextillion baker"),
+            (1e24,                 "Septillion baker"),
         ];
         foreach (var (threshold, name) in bakeMilestones)
         {
@@ -104,6 +107,53 @@ public static class Achievements
             Icon: "✨",
             Description: "Own 10 upgrades.",
             IsUnlocked: s => s.PurchasedUpgrades.Count >= 10));
+
+        list.Add(new AchievementDefinition(
+            Id: "upgrades_50",
+            Name: "Fully accessorised",
+            Icon: "💎",
+            Description: "Own 50 upgrades.",
+            IsUnlocked: s => s.PurchasedUpgrades.Count >= 50));
+
+        // ---- Sugar lump achievements ----
+        (long Threshold, string Name)[] lumpMilestones =
+        [
+            (1,   "Sweet tooth"),
+            (10,  "Sugar hoard"),
+            (50,  "Confectionist"),
+        ];
+        foreach (var (threshold, name) in lumpMilestones)
+        {
+            var t = threshold;
+            list.Add(new AchievementDefinition(
+                Id: $"sugar_{threshold}",
+                Name: name,
+                Icon: "🍬",
+                Description: $"Harvest {threshold} sugar lump{(threshold == 1 ? "" : "s")}.",
+                IsUnlocked: s => s.SugarLumps >= t));
+        }
+
+        // ---- Ascension achievements ----
+        list.Add(new AchievementDefinition(
+            Id: "ascend_1",
+            Name: "Reincarnate",
+            Icon: "🌈",
+            Description: "Ascend for the first time.",
+            IsUnlocked: s => s.AscensionCount >= 1));
+
+        list.Add(new AchievementDefinition(
+            Id: "prestige_10",
+            Name: "Enlightened baker",
+            Icon: "🌠",
+            Description: "Accumulate 10 prestige levels.",
+            IsUnlocked: s => s.PrestigeLevel >= 10));
+
+        list.Add(new AchievementDefinition(
+            Id: "prestige_100",
+            Name: "Transcendent baker",
+            Icon: "🕊️",
+            Description: "Accumulate 100 prestige levels.",
+            IsUnlocked: s => s.PrestigeLevel >= 100));
 
         return list;
     }

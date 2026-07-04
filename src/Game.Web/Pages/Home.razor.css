@@ -49,6 +49,29 @@
     to   { opacity: 0; transform: translate(-50%, -80px); }
 }
 
+.crumb {
+    position: fixed;
+    pointer-events: none;
+    user-select: none;
+    font-size: 0.9rem;
+    z-index: 49;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+    animation: crumb-fly 900ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    transform-origin: center;
+    will-change: transform, opacity;
+}
+
+@keyframes crumb-fly {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(0);
+    }
+    to {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot));
+    }
+}
+
 .game-footer {
     padding: 0.75rem 1rem;
     text-align: center;

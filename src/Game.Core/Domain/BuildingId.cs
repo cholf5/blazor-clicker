@@ -18,4 +18,11 @@ public enum BuildingId
     AlchemyLab,
     Portal,
     TimeMachine,
+    // ---- Late-game additions (see ADR 0002 §Extended catalog) ----
+    AntimatterCondenser,
+    Prism,
+    Chancemaker,
+    FractalEngine,
+    JavascriptConsole,
+    Idleverse,
 }

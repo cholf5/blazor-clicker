@@ -15,11 +15,16 @@ public sealed class GameState
 
     // ---- Core resources ----
     public double Cookies { get; internal set; }
+    /// <summary>Cookies baked in the current run (resets on ascend).</summary>
     public double TotalCookiesBaked { get; private set; }
+    /// <summary>Cookies baked across every run this save has ever done. Never resets.</summary>
+    public double AllTimeCookiesBaked { get; private set; }
 
     // ---- Counters ----
     public long HandmadeClicks { get; private set; }
     public long GoldenCookiesClicked { get; private set; }
+    /// <summary>Number of times the player has ascended (reset for prestige).</summary>
+    public int AscensionCount { get; private set; }
 
     // ---- Ownership ----
     public Dictionary<BuildingId, int> BuildingCounts { get; private set; } = new();
@@ -34,8 +39,21 @@ public sealed class GameState
     private double _nextGoldenAt;
     public List<ActiveBuff> Buffs { get; private set; } = new();
 
+    // ---- Sugar lumps ----
+    /// <summary>Total sugar lumps harvested over the lifetime of this save.</summary>
+    public long SugarLumps { get; private set; }
+    /// <summary>Whether an unharvested sugar lump is currently ripe (waiting for the player to click).</summary>
+    public bool SugarLumpReady { get; private set; }
+    /// <summary>Game time (seconds) at which the next sugar lump will ripen. Used only when not already ripe.</summary>
+    public double SugarLumpNextAt { get; private set; }
+
+    // ---- Prestige / ascension ----
+    /// <summary>Number of heavenly / prestige levels this save has accumulated across every ascension.</summary>
+    public int PrestigeLevel { get; private set; }
+
     // ---- Notifications (drained by the UI each frame) ----
     private readonly Queue<string> _achievementNotifications = new();
+    private readonly Queue<string> _newsMessages = new();
 
     public GameState() : this(new Random()) { }
 
@@ -44,6 +62,7 @@ public sealed class GameState
         _random = random;
         // Schedule the first golden cookie 60-90 seconds into the run.
         _nextGoldenAt = _random.NextDouble() * 30 + 60;
+        SugarLumpNextAt = ProgressionConfig.SugarLumpRipenSeconds;
     }
 
     // =========================================================================
@@ -57,7 +76,7 @@ public sealed class GameState
     {
         var gained = ClickPower();
         Cookies += gained;
-        TotalCookiesBaked += gained;
+        AddBaked(gained);
         HandmadeClicks++;
         return gained;
     }
@@ -116,7 +135,7 @@ public sealed class GameState
         {
             var gained = cps * deltaSeconds;
             Cookies += gained;
-            TotalCookiesBaked += gained;
+            AddBaked(gained);
         }
 
         // 2. Expire buffs
@@ -135,8 +154,58 @@ public sealed class GameState
             SpawnGoldenCookie();
         }
 
-        // 5. Check achievements
+        // 5. Sugar lump ripens (only after the unlock threshold has been hit)
+        if (!SugarLumpReady && AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold
+            && GameTime >= SugarLumpNextAt)
+        {
+            SugarLumpReady = true;
+            _newsMessages.Enqueue("A sugar lump is ripe — go harvest it!");
+        }
+
+        // 6. Check achievements
         CheckAchievements();
+    }
+
+    /// <summary>
+    /// Simulate a period the player spent away from the tab. Grants a
+    /// reduced-efficiency cookie yield and advances timers.
+    /// </summary>
+    public OfflineEarningsSummary ApplyOfflineProgress(double realSeconds)
+    {
+        if (realSeconds < ProgressionConfig.OfflineMinReportSeconds)
+            return new OfflineEarningsSummary(realSeconds, 0, ProgressionConfig.OfflineEfficiency, false);
+
+        var capped = Math.Min(realSeconds, ProgressionConfig.OfflineMaxSeconds);
+
+        // Advance the world clock so buffs expire and sugar lumps ripen naturally.
+        GameTime += capped;
+        Buffs.RemoveAll(b => b.ExpiresAt <= GameTime);
+
+        // Cookies granted at reduced efficiency. Use CurrentCpsRaw so temporary
+        // buffs don't inflate offline earnings.
+        var cps = CurrentCpsRaw();
+        var earned = cps * capped * ProgressionConfig.OfflineEfficiency;
+        if (earned > 0)
+        {
+            Cookies += earned;
+            AddBaked(earned);
+        }
+
+        var lumpNow = false;
+        if (!SugarLumpReady && AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold
+            && GameTime >= SugarLumpNextAt)
+        {
+            SugarLumpReady = true;
+            lumpNow = true;
+        }
+
+        // Push forward the next-golden schedule so we don't spawn 30 golden cookies at once
+        // after coming back from an 8-hour break.
+        if (_nextGoldenAt < GameTime) _nextGoldenAt = GameTime + 15 + _random.NextDouble() * 60;
+
+        CheckAchievements();
+
+        return new OfflineEarningsSummary(capped, earned, ProgressionConfig.OfflineEfficiency, lumpNow);
     }
 
     /// <summary>Consume the currently visible golden cookie. Returns the effect it produced.</summary>
@@ -156,17 +225,67 @@ public sealed class GameState
                 var luckyGain = Math.Min(Cookies * 0.15, CurrentCpsRaw() * 60 * 15) + 13;
                 if (luckyGain < 13) luckyGain = 13; // sanity floor
                 Cookies += luckyGain;
-                TotalCookiesBaked += luckyGain;
+                AddBaked(luckyGain);
+                _newsMessages.Enqueue($"Lucky! +{luckyGain:N0} cookies.");
                 break;
             case GoldenCookieEffect.Frenzy:
                 Buffs.Add(new ActiveBuff(GoldenCookieEffect.Frenzy, 7.0, GameTime + 77));
+                _newsMessages.Enqueue("Frenzy! CPS ×7 for 77 seconds.");
                 break;
             case GoldenCookieEffect.ClickFrenzy:
                 Buffs.Add(new ActiveBuff(GoldenCookieEffect.ClickFrenzy, 777.0, GameTime + 13));
+                _newsMessages.Enqueue("Click frenzy! Click power ×777 for 13 seconds.");
                 break;
         }
 
         return effect;
+    }
+
+    /// <summary>Harvest a ripe sugar lump. Returns true if one was actually harvested.</summary>
+    public bool HarvestSugarLump()
+    {
+        if (!SugarLumpReady) return false;
+        SugarLumpReady = false;
+        SugarLumps++;
+        SugarLumpNextAt = GameTime + ProgressionConfig.SugarLumpRipenSeconds;
+        _newsMessages.Enqueue($"Harvested a sugar lump! You now have {SugarLumps}.");
+        return true;
+    }
+
+    /// <summary>
+    /// Prestige levels this run would grant on ascend. Zero if the player
+    /// hasn't crossed <see cref="ProgressionConfig.MinCookiesToAscend"/>.
+    /// </summary>
+    public int PrestigeAvailableFromAscend()
+    {
+        if (TotalCookiesBaked < ProgressionConfig.MinCookiesToAscend) return 0;
+        return (int)Math.Floor(Math.Cbrt(TotalCookiesBaked / ProgressionConfig.PrestigeCubeUnit));
+    }
+
+    /// <summary>
+    /// Reset the current run in exchange for prestige levels. Keeps achievements,
+    /// sugar lumps, prestige, and life-time counters.
+    /// </summary>
+    public bool Ascend()
+    {
+        var gained = PrestigeAvailableFromAscend();
+        if (gained <= 0) return false;
+
+        PrestigeLevel += gained;
+        AscensionCount++;
+
+        // Reset the run — keep meta progress (achievements, sugar lumps, prestige).
+        Cookies = 0;
+        TotalCookiesBaked = 0;
+        HandmadeClicks = 0;
+        BuildingCounts.Clear();
+        PurchasedUpgrades.Clear();
+        Buffs.Clear();
+        ActiveGolden = null;
+        ScheduleNextGolden();
+
+        _newsMessages.Enqueue($"Ascended! Gained {gained} prestige level{(gained == 1 ? "" : "s")}. New total: {PrestigeLevel}.");
+        return true;
     }
 
     /// <summary>Drain queued achievement notifications for display.</summary>
@@ -175,6 +294,15 @@ public sealed class GameState
         if (_achievementNotifications.Count == 0) return Array.Empty<string>();
         var result = _achievementNotifications.ToArray();
         _achievementNotifications.Clear();
+        return result;
+    }
+
+    /// <summary>Drain queued news-ticker flavor messages for display.</summary>
+    public IReadOnlyList<string> DrainNewsMessages()
+    {
+        if (_newsMessages.Count == 0) return Array.Empty<string>();
+        var result = _newsMessages.ToArray();
+        _newsMessages.Clear();
         return result;
     }
 
@@ -207,7 +335,14 @@ public sealed class GameState
             if (up.EffectKind == UpgradeEffectKind.GlobalCpsMultiplier)
                 globalMult *= up.EffectValue;
         }
-        return total * globalMult;
+
+        // Prestige & sugar lumps stack additively as a "% bonus", then apply
+        // multiplicatively to the whole economy so late-game growth remains large.
+        var permanentBonus = 1.0
+            + PrestigeLevel * ProgressionConfig.PrestigeCpsBonus
+            + SugarLumps * ProgressionConfig.SugarLumpCpsBonus;
+
+        return total * globalMult * permanentBonus;
     }
 
     /// <summary>CPS contributed by all copies of the given building, incl. its upgrades.</summary>
@@ -302,12 +437,20 @@ public sealed class GameState
             ExpiresAt: GameTime + 13,
             ScreenX: 0.1 + _random.NextDouble() * 0.8,
             ScreenY: 0.15 + _random.NextDouble() * 0.7);
+
+        _newsMessages.Enqueue("A golden cookie is glinting somewhere on screen…");
     }
 
     private void ScheduleNextGolden()
     {
         // 60-300 seconds until next spawn attempt.
         _nextGoldenAt = GameTime + 60 + _random.NextDouble() * 240;
+    }
+
+    private void AddBaked(double amount)
+    {
+        TotalCookiesBaked += amount;
+        AllTimeCookiesBaked += amount;
     }
 
     // =========================================================================
@@ -323,6 +466,7 @@ public sealed class GameState
             {
                 UnlockedAchievements.Add(ach.Id);
                 _achievementNotifications.Enqueue(ach.Id);
+                _newsMessages.Enqueue($"Achievement unlocked: {ach.Name}!");
             }
         }
     }
@@ -335,8 +479,10 @@ public sealed class GameState
     {
         Cookies = data.Cookies;
         TotalCookiesBaked = data.TotalCookiesBaked;
+        AllTimeCookiesBaked = data.AllTimeCookiesBaked > 0 ? data.AllTimeCookiesBaked : data.TotalCookiesBaked;
         HandmadeClicks = data.HandmadeClicks;
         GoldenCookiesClicked = data.GoldenCookiesClicked;
+        AscensionCount = data.AscensionCount;
         GameTime = data.GameTime;
         BuildingCounts = data.BuildingCounts.ToDictionary(k => k.Key, k => k.Value);
         PurchasedUpgrades = new HashSet<string>(data.PurchasedUpgrades);
@@ -344,14 +490,22 @@ public sealed class GameState
         Buffs = data.Buffs.ToList();
         ActiveGolden = data.ActiveGolden;
         _nextGoldenAt = data.NextGoldenAt;
+        SugarLumps = data.SugarLumps;
+        SugarLumpReady = data.SugarLumpReady;
+        SugarLumpNextAt = data.SugarLumpNextAt > 0
+            ? data.SugarLumpNextAt
+            : GameTime + ProgressionConfig.SugarLumpRipenSeconds;
+        PrestigeLevel = data.PrestigeLevel;
     }
 
     internal SaveData ToSaveData() => new()
     {
         Cookies = Cookies,
         TotalCookiesBaked = TotalCookiesBaked,
+        AllTimeCookiesBaked = AllTimeCookiesBaked,
         HandmadeClicks = HandmadeClicks,
         GoldenCookiesClicked = GoldenCookiesClicked,
+        AscensionCount = AscensionCount,
         GameTime = GameTime,
         BuildingCounts = BuildingCounts.ToDictionary(k => k.Key, k => k.Value),
         PurchasedUpgrades = PurchasedUpgrades.ToList(),
@@ -359,5 +513,9 @@ public sealed class GameState
         Buffs = Buffs.ToList(),
         ActiveGolden = ActiveGolden,
         NextGoldenAt = _nextGoldenAt,
+        SugarLumps = SugarLumps,
+        SugarLumpReady = SugarLumpReady,
+        SugarLumpNextAt = SugarLumpNextAt,
+        PrestigeLevel = PrestigeLevel,
     };
 }

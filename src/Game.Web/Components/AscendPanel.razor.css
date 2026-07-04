@@ -1,0 +1,85 @@
+.ascend-panel {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #2d1e40 0%, #1b1229 100%);
+    border-radius: 10px;
+    color: #e8d9ff;
+    box-shadow: inset 0 0 0 1px #7d5cc9, 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.ascend-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.ascend-header h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #d9b7ff;
+}
+
+.ascend-current {
+    font-weight: 700;
+    color: #ffdc86;
+    font-size: 13px;
+}
+
+.ascend-blurb {
+    margin: 4px 0 8px 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #cbb6ea;
+}
+
+.ascend-blurb strong {
+    color: #ffdc86;
+}
+
+.ascend-btn {
+    width: 100%;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #a86bff 0%, #6f39d1 100%);
+    color: #fff8ff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #40208a, 0 6px 14px rgba(80, 30, 180, 0.55);
+    transition: transform 60ms ease, box-shadow 60ms ease;
+}
+
+.ascend-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #40208a, 0 3px 8px rgba(80, 30, 180, 0.55);
+}
+
+.ascend-btn.danger {
+    background: linear-gradient(180deg, #ff7676 0%, #b53434 100%);
+    box-shadow: 0 3px 0 #7a1f1f, 0 6px 14px rgba(180, 30, 30, 0.5);
+}
+
+.ascend-confirm {
+    background: rgba(15, 8, 30, 0.6);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.ascend-confirm p {
+    margin: 0 0 8px 0;
+    color: #d5c2f5;
+}
+
+.ascend-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.ascend-actions .ascend-btn {
+    padding: 7px 10px;
+    font-size: 13px;
+}

@@ -1,0 +1,61 @@
+@* Scrolling headline strip that shows a mixture of:
+   * event lines emitted by GameState (achievements, golden cookies, sugar
+     lumps, ascensions) via DrainNewsMessages
+   * ambient flavor pulled from NewsFlavor when the queue is idle
+   * a progression-linked headline that changes as the player crosses
+     lifetime-baked thresholds. *@
+
+@implements IDisposable
+
+<div class="news-ticker" role="status" aria-label="News ticker">
+    <span class="news-icon">📰</span>
+    <div class="news-track" title="@_current">
+        <span class="news-item" @key="_currentKey">@_current</span>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private readonly Random _rng = new();
+    private readonly Queue<string> _pending = new();
+    private DateTime _nextRotate = DateTime.UtcNow;
+    private string _current = "Welcome to your bakery. Click the cookie to get started.";
+    private int _currentKey;
+
+    /// <summary>
+    /// Called by the parent every frame so we can drain the state queue and
+    /// rotate the currently displayed headline on a fixed cadence.
+    /// </summary>
+    public void Pump()
+    {
+        // Absorb any freshly emitted event messages.
+        foreach (var msg in State.DrainNewsMessages())
+            _pending.Enqueue(msg);
+
+        if (DateTime.UtcNow < _nextRotate) return;
+
+        string next;
+        if (_pending.TryDequeue(out var queued))
+        {
+            next = queued;
+            _nextRotate = DateTime.UtcNow.AddSeconds(5);
+        }
+        else
+        {
+            // Alternate between ambient flavor and the current progression tier.
+            next = _rng.Next(3) == 0
+                ? NewsFlavor.PickProgress(State) ?? NewsFlavor.PickIdle(_rng)
+                : NewsFlavor.PickIdle(_rng);
+            _nextRotate = DateTime.UtcNow.AddSeconds(8);
+        }
+
+        if (next != _current)
+        {
+            _current = next;
+            _currentKey++;
+        }
+    }
+
+    public void Dispose() { }
+}

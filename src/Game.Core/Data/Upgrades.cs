@@ -9,6 +9,7 @@ namespace Game.Core.Data;
 ///   building's CPS and is unlocked when you own N of that building.
 /// * Clicking upgrades — flat multipliers on manual click power.
 /// * Cursor synergies — Cursor gains flat CPS per non-Cursor building owned.
+/// * Kitten / global — multiplicative bonuses on all CPS.
 /// </summary>
 public static class Upgrades
 {
@@ -97,6 +98,18 @@ public static class Upgrades
             TargetBuilding: null,
             IsUnlocked: state => state.PurchasedUpgrades.Contains("click_carpal_tunnel") && state.TotalCookiesBaked >= 5_000));
 
+        list.Add(new UpgradeDefinition(
+            Id: "click_gilded_stylus",
+            Name: "Gilded stylus",
+            Icon: "🖋️",
+            Description: "Every manual click hits three times harder.",
+            Cost: 500_000_000,
+            Category: UpgradeCategory.Clicking,
+            EffectKind: UpgradeEffectKind.ClickMultiplier,
+            EffectValue: 3.0,
+            TargetBuilding: null,
+            IsUnlocked: state => state.PurchasedUpgrades.Contains("click_ambidextrous") && state.TotalCookiesBaked >= 1_000_000));
+
         // ---- Cursor synergies ----
         list.Add(new UpgradeDefinition(
             Id: "cursor_thousand_fingers",
@@ -161,6 +174,32 @@ public static class Upgrades
             TargetBuilding: null,
             IsUnlocked: state => state.PurchasedUpgrades.Contains("global_kitten_helpers")
                                  && state.TotalCookiesBaked >= 100_000_000));
+
+        list.Add(new UpgradeDefinition(
+            Id: "global_kitten_engineers",
+            Name: "Feline engineers",
+            Icon: "🐈‍⬛",
+            Description: "Global CPS is multiplied by 1.5.",
+            Cost: 90_000_000_000_000d,
+            Category: UpgradeCategory.Kitten,
+            EffectKind: UpgradeEffectKind.GlobalCpsMultiplier,
+            EffectValue: 1.5,
+            TargetBuilding: null,
+            IsUnlocked: state => state.PurchasedUpgrades.Contains("global_kitten_workers")
+                                 && state.TotalCookiesBaked >= 10_000_000_000));
+
+        list.Add(new UpgradeDefinition(
+            Id: "global_kitten_professors",
+            Name: "Feline professors",
+            Icon: "🎓",
+            Description: "Global CPS is multiplied by 1.75.",
+            Cost: 900_000_000_000_000_000d,
+            Category: UpgradeCategory.Kitten,
+            EffectKind: UpgradeEffectKind.GlobalCpsMultiplier,
+            EffectValue: 1.75,
+            TargetBuilding: null,
+            IsUnlocked: state => state.PurchasedUpgrades.Contains("global_kitten_engineers")
+                                 && state.TotalCookiesBaked >= 1_000_000_000_000d));
 
         return list;
     }

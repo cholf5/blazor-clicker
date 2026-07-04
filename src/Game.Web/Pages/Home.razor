@@ -1,6 +1,7 @@
 @page "/"
 @inject SaveCoordinator Save
 @inject GameLoop Loop
+@inject AudioService Audio
 @implements IDisposable
 
 <PageTitle>Cookie Clicker — Blazor Fan Remake (unofficial)</PageTitle>
@@ -9,6 +10,7 @@
     <!-- Left column: Big cookie + stats -->
     <section class="game-left">
         <StatsPanel State="Save.State" />
+        <NewsTicker @ref="_news" State="Save.State" />
         <div class="cookie-area">
             <BigCookie OnClick="OnClickCookie" />
             @foreach (var f in _floaters)
@@ -16,6 +18,10 @@
                 <span class="floater" style="left: @(f.X)px; top: @(f.Y)px;">
                     +@NumberFormat.Format(f.Amount)
                 </span>
+            }
+            @foreach (var p in _crumbs)
+            {
+                <span class="crumb" style="@(p.Style())">@p.Glyph</span>
             }
         </div>
         <div class="game-footer">
@@ -26,52 +32,108 @@
 
     <!-- Center column: Buildings shop -->
     <section class="game-center">
-        <BuildingList State="Save.State" />
+        <BuildingList State="Save.State" OnPurchased="OnPurchased" />
     </section>
 
-    <!-- Right column: Upgrades + achievements + save controls -->
+    <!-- Right column: Upgrades + achievements + sugar lumps + ascend + save controls -->
     <aside class="game-right">
-        <UpgradeStore State="Save.State" />
+        <UpgradeStore State="Save.State" OnPurchased="OnPurchased" />
+        <SugarLumpWidget State="Save.State" />
+        <AscendPanel State="Save.State" OnAscended="OnAscended" />
         <AchievementList State="Save.State" />
         <SaveMenu OnStateChanged="OnStateReplaced" />
     </aside>
 </div>
 
-<GoldenCookieLayer State="Save.State" />
-<AchievementToasts @ref="_toasts" State="Save.State" />
+<GoldenCookieLayer State="Save.State" OnClicked="OnGoldenClicked" />
+<AchievementToasts @ref="_toasts" State="Save.State" OnUnlocked="OnAchievementUnlocked" />
+
+<OfflineDialog Summary="_offlineSummary" OnDismiss="DismissOffline" />
 
 @code {
     private AchievementToasts? _toasts;
+    private NewsTicker? _news;
     private readonly List<Floater> _floaters = new();
-    private readonly Random _floaterRandom = new();
+    private readonly List<Crumb> _crumbs = new();
+    private readonly Random _fx = new();
+    private OfflineEarningsSummary? _offlineSummary;
 
     protected override async Task OnInitializedAsync()
     {
         Loop.OnTick += OnTick;
         Save.OnStateReplaced += OnStateReplacedInternal;
 
+        await Audio.InitAsync();
         await Save.LoadAsync();
+
+        _offlineSummary = Save.PendingOfflineSummary;
+        if (_offlineSummary is not null) Save.AcknowledgeOfflineSummary();
+
         Loop.Start();
     }
 
     private void OnTick()
     {
         _toasts?.Pump();
-        // Age out floaters (they self-animate via CSS but we cap the list).
-        _floaters.RemoveAll(f => (DateTime.UtcNow - f.CreatedAt).TotalMilliseconds > 900);
+        _news?.Pump();
+        // Age out floaters + crumbs — CSS drives the animation, we just cap counts.
+        var now = DateTime.UtcNow;
+        _floaters.RemoveAll(f => (now - f.CreatedAt).TotalMilliseconds > 900);
+        _crumbs.RemoveAll(c => (now - c.CreatedAt).TotalMilliseconds > 900);
         InvokeAsync(StateHasChanged);
     }
 
     private async Task OnClickCookie(MouseEventArgs e)
     {
         var gained = Save.State.Click();
+        Audio.PlayClick();
+
         _floaters.Add(new Floater(
-            (int)e.ClientX + _floaterRandom.Next(-15, 16),
+            (int)e.ClientX + _fx.Next(-15, 16),
             (int)e.ClientY - 20,
             gained,
             DateTime.UtcNow));
         if (_floaters.Count > 30) _floaters.RemoveAt(0);
+
+        // Spawn 3-5 crumb particles that fly outward from the click point.
+        var crumbCount = 3 + _fx.Next(3);
+        for (var i = 0; i < crumbCount; i++)
+        {
+            _crumbs.Add(new Crumb(
+                (int)e.ClientX,
+                (int)e.ClientY,
+                _fx.Next(-140, 141),
+                -60 - _fx.Next(80),
+                _fx.Next(-180, 181),
+                _fx.Next(3) switch { 0 => "🍪", 1 => "🥠", _ => "🍫" },
+                DateTime.UtcNow));
+        }
+        if (_crumbs.Count > 60) _crumbs.RemoveRange(0, _crumbs.Count - 60);
+
         await Task.CompletedTask;
+    }
+
+    private void OnPurchased() => Audio.PlayPurchase();
+
+    private void OnGoldenClicked()
+    {
+        Audio.PlayGolden();
+    }
+
+    private void OnAchievementUnlocked() => Audio.PlayAchievement();
+
+    private async Task OnAscended()
+    {
+        // Force an immediate save after ascension so we don't lose the reset
+        // if the tab dies before the next autosave interval.
+        try { await Save.SaveNowAsync(); } catch { }
+        StateHasChanged();
+    }
+
+    private void DismissOffline()
+    {
+        _offlineSummary = null;
+        StateHasChanged();
     }
 
     private void OnStateReplacedInternal() => InvokeAsync(StateHasChanged);
@@ -85,4 +147,11 @@
     }
 
     private sealed record Floater(int X, int Y, double Amount, DateTime CreatedAt);
+
+    private sealed record Crumb(int X, int Y, int Dx, int Dy, int Rot, string Glyph, DateTime CreatedAt)
+    {
+        // Inline style feeds the crumb-fly CSS keyframe with per-particle vectors.
+        public string Style() =>
+            $"left: {X}px; top: {Y}px; --dx: {Dx}px; --dy: {Dy}px; --rot: {Rot}deg;";
+    }
 }

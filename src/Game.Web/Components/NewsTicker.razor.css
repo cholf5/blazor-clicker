@@ -1,0 +1,43 @@
+.news-ticker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0.5rem 0.75rem 0;
+    padding: 6px 10px;
+    background: rgba(20, 12, 4, 0.55);
+    border: 1px solid rgba(180, 140, 70, 0.35);
+    border-radius: 6px;
+    color: #efd8a7;
+    font-size: 12px;
+    font-style: italic;
+    line-height: 1.35;
+    overflow: hidden;
+}
+
+.news-icon {
+    flex: 0 0 auto;
+    font-size: 13px;
+    opacity: 0.75;
+    font-style: normal;
+}
+
+.news-track {
+    flex: 1 1 auto;
+    overflow: hidden;
+    position: relative;
+    height: 1.35em;
+}
+
+.news-item {
+    display: inline-block;
+    animation: news-fade-in 400ms ease-out;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+@keyframes news-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

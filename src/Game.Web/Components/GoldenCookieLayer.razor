@@ -6,7 +6,7 @@
 {
     <button class="golden-cookie"
             style="@GetStyle(cookie)"
-            @onclick="() => State.ClickGoldenCookie()"
+            @onclick="OnClick"
             aria-label="Golden cookie!">
         🌟
     </button>
@@ -14,7 +14,14 @@
 
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter] public EventCallback OnClicked { get; set; }
 
     private static string GetStyle(GoldenCookie c) =>
         $"left: {c.ScreenX * 100:0.##}%; top: {c.ScreenY * 100:0.##}%;";
+
+    private async Task OnClick()
+    {
+        if (State.ClickGoldenCookie() is not null)
+            await OnClicked.InvokeAsync();
+    }
 }

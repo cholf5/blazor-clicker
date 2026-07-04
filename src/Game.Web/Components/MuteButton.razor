@@ -1,0 +1,26 @@
+@* Compact mute-toggle button. Reads state from AudioService and pushes
+   the flip back through the service so preference persists across reloads. *@
+
+@inject AudioService Audio
+@implements IDisposable
+
+<button class="mute-btn @(Audio.IsMuted ? "muted" : "")"
+        @onclick="Toggle"
+        title="@(Audio.IsMuted ? "Sound is muted — click to unmute" : "Sound is on — click to mute")">
+    @(Audio.IsMuted ? "🔇" : "🔊")
+</button>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Audio.OnMuteChanged += Refresh;
+    }
+
+    private async Task Toggle() => await Audio.ToggleAsync();
+    private void Refresh() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Audio.OnMuteChanged -= Refresh;
+    }
+}

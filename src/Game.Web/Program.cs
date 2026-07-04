@@ -15,5 +15,6 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddSingleton<LocalStorageService>();
 builder.Services.AddSingleton<SaveCoordinator>();
 builder.Services.AddSingleton<GameLoop>();
+builder.Services.AddSingleton<AudioService>();
 
 await builder.Build().RunAsync();

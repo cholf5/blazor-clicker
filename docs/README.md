@@ -13,6 +13,7 @@
 |---|---|---|---|
 | [0001](decisions/0001-technology-stack.md) | 技术栈选型 | 已采纳 | 2026-07-04 |
 | [0002](decisions/0002-implementation.md) | M1–M4 实现决策 | 已采纳 | 2026-07-04 |
+| [0003](decisions/0003-late-game-and-polish.md) | M5 后期系统 + 手感增强 | 已采纳 | 2026-07-04 |
 
 ## 复盘索引
 

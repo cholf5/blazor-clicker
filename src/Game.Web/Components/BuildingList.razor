@@ -26,13 +26,16 @@
 
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter] public EventCallback OnPurchased { get; set; }
 
     private int BulkAmount { get; set; } = 1;
     private static readonly int[] _bulkOptions = [1, 10, 100];
 
-    private void Buy(BuildingId id, int amount)
+    private async Task Buy(BuildingId id, int amount)
     {
-        if (amount <= 1) State.BuyBuilding(id);
-        else State.BuyBuildingBulk(id, amount);
+        var bought = amount <= 1
+            ? (State.BuyBuilding(id) ? 1 : 0)
+            : State.BuyBuildingBulk(id, amount);
+        if (bought > 0) await OnPurchased.InvokeAsync();
     }
 }

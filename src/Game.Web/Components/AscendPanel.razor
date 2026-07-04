@@ -1,0 +1,87 @@
+@* Ascend / prestige panel. Hidden entirely until the player has any hope
+   of gaining a level. Shows preview of gain and confirmation dialog. *@
+
+@inject AudioService Audio
+
+@if (Visible)
+{
+    <section class="ascend-panel">
+        <header class="ascend-header">
+            <h3>Ascension</h3>
+            @if (State.PrestigeLevel > 0)
+            {
+                <span class="ascend-current" title="Permanent CPS bonus from prior ascensions">
+                    ✨ @State.PrestigeLevel · +@(_prestigePercent.ToString("0.#"))%
+                </span>
+            }
+        </header>
+
+        @if (_confirming)
+        {
+            <div class="ascend-confirm">
+                <p>
+                    Ascending will <strong>wipe the current run</strong> — cookies,
+                    buildings, and upgrades reset. Achievements, sugar lumps and
+                    prestige stay with you.
+                </p>
+                <p>You will gain <strong>+@_available prestige level@(_available == 1 ? "" : "s")</strong>.</p>
+                <div class="ascend-actions">
+                    <button class="ascend-btn danger" @onclick="ConfirmAscend">Ascend</button>
+                    <button class="ascend-btn" @onclick="() => _confirming = false">Cancel</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            @if (_available > 0)
+            {
+                <p class="ascend-blurb">
+                    Ascend now to gain <strong>+@_available</strong>
+                    prestige level@(_available == 1 ? "" : "s") — each level grants a
+                    permanent +@((ProgressionConfig.PrestigeCpsBonus * 100).ToString("0.#"))% CPS boost.
+                </p>
+                <button class="ascend-btn" @onclick="() => _confirming = true">🌈 Ascend</button>
+            }
+            else
+            {
+                <p class="ascend-blurb">
+                    Reach <strong>@NumberFormat.Format(ProgressionConfig.MinCookiesToAscend)</strong>
+                    cookies baked this run to unlock your first ascension.
+                    Currently: @NumberFormat.Format(State.TotalCookiesBaked).
+                </p>
+            }
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter] public EventCallback OnAscended { get; set; }
+
+    private bool _confirming;
+    private int _available;
+    private double _prestigePercent;
+
+    protected override void OnParametersSet()
+    {
+        _available = State.PrestigeAvailableFromAscend();
+        _prestigePercent = State.PrestigeLevel * ProgressionConfig.PrestigeCpsBonus * 100;
+    }
+
+    // Show once the player is within 10% of the threshold, so the panel
+    // gives a heads-up before they can actually push the button.
+    private bool Visible =>
+        State.AscensionCount > 0
+        || State.PrestigeLevel > 0
+        || State.TotalCookiesBaked >= ProgressionConfig.MinCookiesToAscend * 0.1;
+
+    private async Task ConfirmAscend()
+    {
+        if (State.Ascend())
+        {
+            Audio.PlayAscend();
+            _confirming = false;
+            await OnAscended.InvokeAsync();
+        }
+    }
+}

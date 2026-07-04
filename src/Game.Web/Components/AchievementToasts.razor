@@ -16,21 +16,28 @@
 
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter] public EventCallback OnUnlocked { get; set; }
 
     private readonly List<Toast> _toasts = new();
-    private DateTime _lastCheck = DateTime.MinValue;
 
     /// <summary>Called by the parent every frame after State.Tick.</summary>
     public void Pump()
     {
-        // Drain new achievement notifications from GameState and display them.
+        var newlyUnlocked = false;
         foreach (var id in State.DrainAchievementNotifications())
         {
             var def = Achievements.Get(id);
             _toasts.Add(new Toast(def.Name, def.Icon, DateTime.UtcNow));
+            newlyUnlocked = true;
         }
         // Age out ones older than 4 seconds.
         _toasts.RemoveAll(t => (DateTime.UtcNow - t.CreatedAt).TotalSeconds > 4);
+
+        if (newlyUnlocked)
+        {
+            // Fire-and-forget — the callback is used for a sound cue.
+            _ = OnUnlocked.InvokeAsync();
+        }
     }
 
     private sealed record Toast(string Name, string Icon, DateTime CreatedAt);
