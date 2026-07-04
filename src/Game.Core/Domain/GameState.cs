@@ -421,6 +421,60 @@ public sealed class GameState
     public double BulkBuildingCost(BuildingId id, int amount) =>
         Formulas.BulkBuildingCost(Buildings.Get(id).BaseCost, BuildingCounts.GetValueOrDefault(id), amount);
 
+    /// <summary>
+    /// Whether a building is revealed to the player. This is a <b>presentation</b>
+    /// signal: the shop shows unlocked buildings and hides/greys the rest — it is
+    /// deliberately <b>not</b> enforced inside <see cref="BuyBuilding"/>, mirroring
+    /// the original where progressive reveal is a display behaviour, not an
+    /// economic constraint (during normal play the conditions are always met by
+    /// the time you can afford one). Computed on demand — never persisted — from
+    /// two signals that only move forward within a run, so an unlock can never be
+    /// undone: the previous building being owned, and this run's TotalCookiesBaked
+    /// crossing the building's threshold. The first building has no predecessor
+    /// and is always unlocked. See ProgressionConfig.BuildingUnlockCostFraction.
+    /// </summary>
+    public bool IsBuildingUnlocked(BuildingId id)
+    {
+        var all = Buildings.All;
+        var index = -1;
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (all[i].Id == id) { index = i; break; }
+        }
+        // An id not present in the catalog is a programming error, not a runtime
+        // state we should paper over by pretending it's unlocked.
+        if (index < 0)
+            throw new ArgumentOutOfRangeException(nameof(id), id, "Building id is not in the catalog.");
+        if (index == 0) return true; // Cursor has no predecessor — always unlocked.
+
+        var prerequisiteOwned = BuildingCounts.GetValueOrDefault(all[index - 1].Id) >= 1;
+        return prerequisiteOwned && TotalCookiesBaked >= BuildingUnlockThreshold(id);
+    }
+
+    /// <summary>
+    /// This run's TotalCookiesBaked at which <paramref name="id"/> reveals in the
+    /// shop. Single source of truth for the unlock formula — both the domain's
+    /// <see cref="IsBuildingUnlocked"/> gate and the UI's "Unlocks at N baked"
+    /// hint read this, so the number shown can never drift from the number
+    /// actually used. See ProgressionConfig.BuildingUnlockCostFraction.
+    /// </summary>
+    public double BuildingUnlockThreshold(BuildingId id) =>
+        Buildings.Get(id).BaseCost * ProgressionConfig.BuildingUnlockCostFraction;
+
+    /// <summary>
+    /// The first not-yet-unlocked building in catalog order, used to render a
+    /// single mysterious "coming next" placeholder in the shop. Returns null
+    /// once every building is unlocked.
+    /// </summary>
+    public BuildingId? NextLockedBuilding()
+    {
+        foreach (var def in Buildings.All)
+        {
+            if (!IsBuildingUnlocked(def.Id)) return def.Id;
+        }
+        return null;
+    }
+
     /// <summary>Upgrades currently for sale (unlocked and not yet purchased), cheapest first.</summary>
     public IEnumerable<UpgradeDefinition> AvailableUpgrades() =>
         Upgrades.All

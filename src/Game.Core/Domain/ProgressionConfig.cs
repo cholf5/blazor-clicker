@@ -30,6 +30,16 @@ public static class ProgressionConfig
     /// <summary>Minimum cookies baked this run before ascending is even offered.</summary>
     public const double MinCookiesToAscend = 1_000_000_000_000d;
 
+    // ---- Building unlock ---------------------------------------------------
+    /// <summary>
+    /// A building becomes visible/purchasable once this run's TotalCookiesBaked
+    /// reaches its BaseCost times this fraction (and the previous building is
+    /// owned). Slightly below 1 so the next building reveals just as the player
+    /// is about to afford it, mirroring the original's "appears when you're
+    /// close" feel.
+    /// </summary>
+    public const double BuildingUnlockCostFraction = 0.5;
+
     // ---- Offline earnings --------------------------------------------------
     /// <summary>Maximum real-time window (seconds) that can accumulate offline. Longer waits are truncated.</summary>
     public const double OfflineMaxSeconds = 24 * 60 * 60; // 24 hours

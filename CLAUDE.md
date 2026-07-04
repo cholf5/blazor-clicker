@@ -35,6 +35,15 @@ dotnet build Game.slnx -c Release
 dotnet publish src/Game.Web/Game.Web.csproj -c Release -o publish
 ```
 
+> **Iron rule — never background `dotnet test`/`build`/`watch`.** Always run
+> them in the foreground and wait for the exit. Backgrounding a test run and
+> then polling with `sleep` reads as "stuck", and a stray `testhost` keeps the
+> output DLL locked so the next build fails with `MSB3021 (file in use)`. If a
+> run ever leaves a lock behind, clear it with
+> `Get-Process testhost,dotnet | Where-Object Id -ne $PID | Stop-Process -Force`
+> before rebuilding. To go faster, narrow the run with `--filter`, don't
+> background it.
+
 Pushes to `main` trigger `.github/workflows/deploy.yml` (restore → test →
 publish → GitHub Pages), which rewrites `<base href>` for the repo subpath,
 adds `.nojekyll`, and copies `index.html` to `404.html` for SPA fallback.

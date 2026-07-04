@@ -24,6 +24,24 @@
     filter: grayscale(0.4);
 }
 
+/* "Coming next" placeholder: heavily dimmed, no hover lift, hidden identity. */
+.building-row.locked-preview {
+    opacity: 0.4;
+    cursor: help;
+    filter: grayscale(0.9);
+    border-style: dashed;
+    background: linear-gradient(90deg, rgba(35, 30, 25, 0.6), rgba(25, 20, 15, 0.6));
+}
+
+.building-row.locked-preview .building-name {
+    color: #9a8d78;
+    letter-spacing: 0.15em;
+}
+
+.building-row.locked-preview .building-cost {
+    color: #a08765;
+}
+
 .building-icon {
     font-size: 2rem;
     margin-right: 0.75rem;

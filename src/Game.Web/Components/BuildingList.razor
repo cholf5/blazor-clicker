@@ -15,12 +15,19 @@
         </div>
     </header>
 
-    @foreach (var def in Buildings.All)
+    @foreach (var def in Buildings.All.Where(d => State.IsBuildingUnlocked(d.Id)))
     {
         <BuildingRow State="State"
                      Definition="def"
                      BulkAmount="BulkAmount"
                      OnBuy="amount => Buy(def.Id, amount)" />
+    }
+
+    @if (State.NextLockedBuilding() is { } nextId)
+    {
+        <BuildingRow State="State"
+                     Definition="Buildings.Get(nextId)"
+                     Locked="true" />
     }
 </section>
 
