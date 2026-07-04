@@ -181,6 +181,61 @@ public static class Achievements
                 IsUnlocked: s => s.GoldenCookiesClicked >= t));
         }
 
+        // ---- Frenzy combo achievements (click a golden cookie during a frenzy) ----
+        (long Threshold, string Name)[] comboMilestones =
+        [
+            (1,    "In the zone"),
+            (10,   "Combo baker"),
+            (50,   "Chain reaction"),
+            (100,  "Frenzy virtuoso"),
+        ];
+        foreach (var (threshold, name) in comboMilestones)
+        {
+            var t = threshold;
+            list.Add(new AchievementDefinition(
+                Id: $"combo_{threshold}",
+                Name: name,
+                Icon: "⚡",
+                Description: threshold == 1
+                    ? "Click a golden cookie while a frenzy is active."
+                    : $"Click {threshold:N0} golden cookies while a frenzy is active.",
+                IsUnlocked: s => s.GoldenClicksDuringFrenzy >= t));
+        }
+
+        // ---- Handmade cookie achievements (cookies from manual clicks only) ----
+        double[] handmadeThresholds =
+            [1_000, 100_000, 1e7, 1e9, 1e11, 1e13, 1e15];
+        foreach (var threshold in handmadeThresholds)
+        {
+            var t = threshold;
+            list.Add(new AchievementDefinition(
+                Id: $"handmade_{threshold:0}",
+                Name: HandmadeName(threshold),
+                Icon: "🤲",
+                Description: $"Make {NumberFormat.Format(threshold)} cookies from manual clicks.",
+                IsUnlocked: s => s.HandmadeCookies >= t));
+        }
+
+        // ---- Play-time achievements (uses the existing GameTime clock) ----
+        (double Seconds, string Name)[] playtimeMilestones =
+        [
+            (3_600,     "Getting comfy"),        // 1 hour
+            (36_000,    "Dedicated baker"),      // 10 hours
+            (360_000,   "Marathon baker"),       // 100 hours
+            (3_600_000, "Eternal shift"),        // 1000 hours
+        ];
+        foreach (var (seconds, name) in playtimeMilestones)
+        {
+            var sec = seconds;
+            var hours = (int)(seconds / 3_600);
+            list.Add(new AchievementDefinition(
+                Id: $"playtime_{(int)seconds}",
+                Name: name,
+                Icon: "🕰️",
+                Description: $"Play for a total of {hours:N0} hour{(hours == 1 ? "" : "s")}.",
+                IsUnlocked: s => s.GameTime >= sec));
+        }
+
         // ---- Upgrade ownership milestones ----
         // 83 upgrades exist in total, so the ladder tops out at "own them all".
         (int Threshold, string Name)[] upgradeMilestones =
@@ -314,5 +369,24 @@ public static class Achievements
         var word = MagnitudeWords.TryGetValue(tier, out var w) ? w : "cosmic";
         var name = char.ToUpperInvariant(word[0]) + word[1..];
         return remainder == 2 ? $"Hundred-{word} per second" : $"{name} per second";
+    }
+
+    /// <summary>
+    /// Builds an original name for a handmade-cookie milestone, themed around
+    /// hands / craftsmanship rather than raw magnitude.
+    /// </summary>
+    private static string HandmadeName(double threshold)
+    {
+        var exp = (int)Math.Round(Math.Log10(threshold));
+        return exp switch
+        {
+            <= 3 => "Handcrafted",
+            <= 5 => "Artisan baker",
+            <= 7 => "Master kneader",
+            <= 9 => "Callused fingertips",
+            <= 11 => "Legendary hands",
+            <= 13 => "Cookie sculptor",
+            _ => "Bare-handed titan",
+        };
     }
 }

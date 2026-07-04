@@ -23,6 +23,10 @@ public sealed class GameState
     // ---- Counters ----
     public long HandmadeClicks { get; private set; }
     public long GoldenCookiesClicked { get; private set; }
+    /// <summary>Cookies produced by manual clicks only (never resets, incl. click buffs).</summary>
+    public double HandmadeCookies { get; private set; }
+    /// <summary>Golden cookies clicked while a Frenzy or Click frenzy buff was already active.</summary>
+    public long GoldenClicksDuringFrenzy { get; private set; }
     /// <summary>Number of times the player has ascended (reset for prestige).</summary>
     public int AscensionCount { get; private set; }
 
@@ -77,6 +81,7 @@ public sealed class GameState
         var gained = ClickPower();
         Cookies += gained;
         AddBaked(gained);
+        HandmadeCookies += gained;
         HandmadeClicks++;
         return gained;
     }
@@ -215,6 +220,10 @@ public sealed class GameState
 
         var effect = g.Effect;
         GoldenCookiesClicked++;
+        // Count this as a combo click if a frenzy-type buff was already running
+        // when the cookie was clicked (checked before this click adds its own).
+        if (Buffs.Any(b => b.Effect is GoldenCookieEffect.Frenzy or GoldenCookieEffect.ClickFrenzy))
+            GoldenClicksDuringFrenzy++;
         ActiveGolden = null;
         ScheduleNextGolden();
 
@@ -482,6 +491,8 @@ public sealed class GameState
         AllTimeCookiesBaked = data.AllTimeCookiesBaked > 0 ? data.AllTimeCookiesBaked : data.TotalCookiesBaked;
         HandmadeClicks = data.HandmadeClicks;
         GoldenCookiesClicked = data.GoldenCookiesClicked;
+        HandmadeCookies = data.HandmadeCookies;
+        GoldenClicksDuringFrenzy = data.GoldenClicksDuringFrenzy;
         AscensionCount = data.AscensionCount;
         GameTime = data.GameTime;
         BuildingCounts = data.BuildingCounts.ToDictionary(k => k.Key, k => k.Value);
@@ -505,6 +516,8 @@ public sealed class GameState
         AllTimeCookiesBaked = AllTimeCookiesBaked,
         HandmadeClicks = HandmadeClicks,
         GoldenCookiesClicked = GoldenCookiesClicked,
+        HandmadeCookies = HandmadeCookies,
+        GoldenClicksDuringFrenzy = GoldenClicksDuringFrenzy,
         AscensionCount = AscensionCount,
         GameTime = GameTime,
         BuildingCounts = BuildingCounts.ToDictionary(k => k.Key, k => k.Value),

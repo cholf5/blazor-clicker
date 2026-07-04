@@ -71,7 +71,7 @@ public class SaveSystemTests
     {
         // Hand-rolled v1 save: only has the fields that existed at v1. The
         // migration must preserve them, seed AllTimeCookiesBaked from the
-        // per-run counter, and leave the new v2 fields at their defaults.
+        // per-run counter, and leave the newer fields at their defaults.
         var v1Json = """
         {
           "Version": 1,
@@ -98,6 +98,21 @@ public class SaveSystemTests
         Assert.Equal(0, state.PrestigeLevel);
         Assert.Equal(0, state.SugarLumps);
         Assert.False(state.SugarLumpReady);
+        // v3 counters have no v1 source and default to zero.
+        Assert.Equal(0, state.HandmadeCookies);
+        Assert.Equal(0, state.GoldenClicksDuringFrenzy);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesV3Counters()
+    {
+        var s = new GameState();
+        for (var i = 0; i < 5; i++) s.Click(); // accrues HandmadeCookies
+        var json = SaveSystem.SerializeToJson(s);
+        var loaded = SaveSystem.DeserializeFromJson(json);
+
+        Assert.Equal(s.HandmadeCookies, loaded.HandmadeCookies, 4);
+        Assert.Equal(s.GoldenClicksDuringFrenzy, loaded.GoldenClicksDuringFrenzy);
     }
 
     [Fact]

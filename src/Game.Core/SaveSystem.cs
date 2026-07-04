@@ -15,7 +15,7 @@ namespace Game.Core;
 /// </summary>
 public static class SaveSystem
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -102,6 +102,12 @@ public static class SaveSystem
                     // Old saves have no offline stamp; leave SavedAtUnixSeconds = 0
                     // so SaveCoordinator can decide not to apply offline earnings.
                     data.Version = 2;
+                    break;
+
+                case 2:
+                    // v2 → v3: new counters. No data to backfill — HandmadeCookies
+                    // and GoldenClicksDuringFrenzy simply start at 0 for old saves.
+                    data.Version = 3;
                     break;
 
                 default:

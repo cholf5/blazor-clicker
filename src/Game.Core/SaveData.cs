@@ -16,8 +16,10 @@ public sealed class SaveData
     /// * v2 — added sugar lumps, prestige/ascension, offline earnings timestamp,
     ///   and lifetime baked counter. Older saves default the new fields to 0 /
     ///   false / current game time.
+    /// * v3 — added handmade-cookie and frenzy-combo counters for the extra
+    ///   achievement families. Older saves default both to 0.
     /// </summary>
-    public int Version { get; set; } = 2;
+    public int Version { get; set; } = 3;
 
     // ---- v1 fields ---------------------------------------------------------
     public double Cookies { get; set; }
@@ -56,4 +58,11 @@ public sealed class SaveData
     /// offline earnings when the tab reopens. Zero on saves that pre-date v2.
     /// </summary>
     public long SavedAtUnixSeconds { get; set; }
+
+    // ---- v3 additions ------------------------------------------------------
+    /// <summary>Cookies produced by manual clicks only. Never resets.</summary>
+    public double HandmadeCookies { get; set; }
+
+    /// <summary>Golden cookies clicked while a frenzy-type buff was already active.</summary>
+    public long GoldenClicksDuringFrenzy { get; set; }
 }

@@ -116,6 +116,66 @@ public class AchievementTests
         Assert.Contains("upgrades_83", s.UnlockedAchievements);
     }
 
+    [Fact]
+    public void HandmadeClicks_AccumulateHandmadeCookies_AndUnlock()
+    {
+        // Each click yields at least 1 cookie; 1000 clicks clears handmade_1000.
+        var s = new GameState();
+        for (var i = 0; i < 1_000; i++) s.Click();
+        s.Tick(0.001);
+
+        Assert.True(s.HandmadeCookies >= 1_000);
+        Assert.Contains("handmade_1000", s.UnlockedAchievements);
+    }
+
+    [Fact]
+    public void PassiveCps_DoesNotCountAsHandmade()
+    {
+        var s = new GameState { Cookies = double.MaxValue };
+        s.BuyBuildingBulk(BuildingId.Grandma, 10);
+        s.Tick(100); // large passive yield, zero clicks
+
+        Assert.Equal(0, s.HandmadeCookies);
+    }
+
+    [Fact]
+    public void ClickingGoldenDuringFrenzy_CountsAsCombo_AndUnlocks()
+    {
+        // Find a seed that produces a Frenzy, click it (starts the 77s buff),
+        // then catch a second golden cookie that spawns before the buff ends.
+        for (var seed = 0; seed < 500; seed++)
+        {
+            var s = new GameState(new Random(seed));
+            s.BuyBuildingBulk(BuildingId.Cursor, 100);
+            s.Cookies = 1_000_000;
+            s.Tick(100);
+            if (s.ActiveGolden?.Effect != GoldenCookieEffect.Frenzy) continue;
+
+            s.ClickGoldenCookie(); // frenzy now active, not itself a combo
+            Assert.Equal(0, s.GoldenClicksDuringFrenzy);
+
+            // A second golden is scheduled 60-300s out; only those landing
+            // within the 77s frenzy window qualify. Tick to 76s to catch one.
+            s.Tick(76);
+            if (s.ActiveGolden is null) continue;
+
+            s.ClickGoldenCookie(); // clicked during active frenzy → combo
+            s.Tick(0.001);
+            Assert.Equal(1, s.GoldenClicksDuringFrenzy);
+            Assert.Contains("combo_1", s.UnlockedAchievements);
+            return;
+        }
+        Assert.Fail("No frenzy+second-golden sequence appeared in 500 seeds.");
+    }
+
+    [Fact]
+    public void Playtime_UnlocksAfterOneHour()
+    {
+        var s = new GameState();
+        s.Tick(3_600);
+        Assert.Contains("playtime_3600", s.UnlockedAchievements);
+    }
+
     // Builds a GameState with a specific lifetime-baked total by round-tripping
     // through the save system (TotalCookiesBaked is not directly settable).
     private static GameState LoadWithTotalBaked(double total)
