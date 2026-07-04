@@ -1,0 +1,38 @@
+@* Vertical list of every building in the shop, with a small selector at
+   the top that lets the player buy 1 / 10 / 100 at a time. *@
+
+<section class="building-list">
+    <header class="building-list-header">
+        <h2>Buildings</h2>
+        <div class="bulk-select">
+            @foreach (var opt in _bulkOptions)
+            {
+                <button class="bulk-option @(BulkAmount == opt ? "active" : "")"
+                        @onclick="() => BulkAmount = opt">
+                    ×@opt
+                </button>
+            }
+        </div>
+    </header>
+
+    @foreach (var def in Buildings.All)
+    {
+        <BuildingRow State="State"
+                     Definition="def"
+                     BulkAmount="BulkAmount"
+                     OnBuy="amount => Buy(def.Id, amount)" />
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private int BulkAmount { get; set; } = 1;
+    private static readonly int[] _bulkOptions = [1, 10, 100];
+
+    private void Buy(BuildingId id, int amount)
+    {
+        if (amount <= 1) State.BuyBuilding(id);
+        else State.BuyBuildingBulk(id, amount);
+    }
+}

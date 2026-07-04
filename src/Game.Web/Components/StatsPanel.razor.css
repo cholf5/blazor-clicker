@@ -1,0 +1,63 @@
+.stats {
+    text-align: center;
+    padding: 1rem 0.5rem;
+}
+
+.stats-bank-count {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #f7dfa8;
+    letter-spacing: -0.02em;
+}
+
+.stats-bank-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #b39868;
+}
+
+.stats-cps {
+    margin-top: 0.5rem;
+    color: #d7c497;
+    font-size: 1rem;
+}
+
+.stats-meta {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: #a08765;
+    flex-wrap: wrap;
+}
+
+.stats-buffs {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.buff {
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: rgba(255, 205, 60, 0.2);
+    color: #ffd857;
+    border: 1px solid rgba(255, 205, 60, 0.5);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+.buff-clickfrenzy {
+    background: rgba(255, 100, 100, 0.2);
+    color: #ff8c8c;
+    border-color: rgba(255, 100, 100, 0.5);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}

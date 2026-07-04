@@ -1,0 +1,40 @@
+@* Top-of-column stats panel. Reads live from GameState — parent controls
+   re-render frequency by subscribing to the game loop. *@
+
+<div class="stats">
+    <div class="stats-bank">
+        <div class="stats-bank-count">@NumberFormat.Format(State.Cookies)</div>
+        <div class="stats-bank-label">cookie@(State.Cookies == 1 ? "" : "s")</div>
+    </div>
+    <div class="stats-cps">
+        per second: <strong>@NumberFormat.Format(State.CurrentCps())</strong>
+    </div>
+    <div class="stats-meta">
+        <span title="Total cookies ever baked">baked: @NumberFormat.Format(State.TotalCookiesBaked)</span>
+        <span title="Manual clicks so far">clicks: @NumberFormat.Format(State.HandmadeClicks)</span>
+        <span title="Achievements unlocked">🏆 @State.UnlockedAchievements.Count / @Achievements.All.Count</span>
+    </div>
+    @if (State.Buffs.Count > 0)
+    {
+        <div class="stats-buffs">
+            @foreach (var buff in State.Buffs)
+            {
+                var remaining = Math.Max(0, buff.ExpiresAt - State.GameTime);
+                <span class="buff buff-@buff.Effect.ToString().ToLowerInvariant()">
+                    @BuffLabel(buff.Effect) — @remaining.ToString("0")s
+                </span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private static string BuffLabel(GoldenCookieEffect e) => e switch
+    {
+        GoldenCookieEffect.Frenzy => "Frenzy ×7 CPS",
+        GoldenCookieEffect.ClickFrenzy => "Click frenzy ×777",
+        _ => e.ToString()
+    };
+}

@@ -1,0 +1,8 @@
+.game-root {
+    min-height: 100vh;
+    color: #f2e6cf;
+    background:
+        radial-gradient(circle at 20% 10%, #442a15 0%, transparent 40%),
+        radial-gradient(circle at 80% 90%, #2a1a0d 0%, transparent 50%),
+        #1c120a;
+}

@@ -1,0 +1,37 @@
+@* Fixed-position stack of achievement unlock notifications, auto-dismissed
+   a few seconds after appearing. *@
+
+<div class="ach-toasts">
+    @foreach (var toast in _toasts)
+    {
+        <div class="ach-toast">
+            <div class="ach-toast-icon">@toast.Icon</div>
+            <div class="ach-toast-body">
+                <div class="ach-toast-title">Achievement unlocked!</div>
+                <div class="ach-toast-name">@toast.Name</div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private readonly List<Toast> _toasts = new();
+    private DateTime _lastCheck = DateTime.MinValue;
+
+    /// <summary>Called by the parent every frame after State.Tick.</summary>
+    public void Pump()
+    {
+        // Drain new achievement notifications from GameState and display them.
+        foreach (var id in State.DrainAchievementNotifications())
+        {
+            var def = Achievements.Get(id);
+            _toasts.Add(new Toast(def.Name, def.Icon, DateTime.UtcNow));
+        }
+        // Age out ones older than 4 seconds.
+        _toasts.RemoveAll(t => (DateTime.UtcNow - t.CreatedAt).TotalSeconds > 4);
+    }
+
+    private sealed record Toast(string Name, string Icon, DateTime CreatedAt);
+}

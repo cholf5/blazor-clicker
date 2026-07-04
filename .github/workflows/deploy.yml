@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Game.slnx
+
+      - name: Test
+        run: dotnet test Game.slnx --no-restore --configuration Release
+
+      - name: Publish
+        run: dotnet publish src/Game.Web/Game.Web.csproj --no-restore -c Release -o publish
+
+      # Rewrite <base href="/"> so the app works under the repo subpath on
+      # <user>.github.io/<repo>/. Uses the repository name from the runner env.
+      - name: Rewrite base href
+        run: |
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          echo "Setting base href to /${REPO_NAME}/"
+          sed -i "s|<base href=\"/\" />|<base href=\"/${REPO_NAME}/\" />|g" publish/wwwroot/index.html
+
+      # Blazor ships filenames starting with '_' (e.g. _framework). GitHub
+      # Pages runs Jekyll by default, which strips them. .nojekyll disables it.
+      - name: Add .nojekyll
+        run: touch publish/wwwroot/.nojekyll
+
+      # SPA fallback so client-side routes (e.g. deep links) don't 404.
+      - name: Add SPA 404 fallback
+        run: cp publish/wwwroot/index.html publish/wwwroot/404.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,44 @@
+@* One row in the building list. Handles buy / bulk-buy / affordability
+   styling. Emits OnBuy for the parent to invoke on GameState. *@
+
+@{
+    var owned = State.BuildingCounts.GetValueOrDefault(Definition.Id);
+    var unitCost = State.NextBuildingCost(Definition.Id);
+    var bulkCost = BulkAmount > 1 ? State.BulkBuildingCost(Definition.Id, BulkAmount) : unitCost;
+    var canAffordUnit = State.Cookies >= unitCost;
+    var canAffordBulk = State.Cookies >= bulkCost;
+    var unitCps = State.GetBuildingUnitCps(Definition.Id);
+    var totalCps = unitCps * owned;
+}
+
+<button class="building-row @(canAffordBulk ? "" : "locked")"
+        @onclick="() => OnBuy.InvokeAsync(BulkAmount)"
+        disabled="@(!canAffordBulk)">
+    <span class="building-icon">@Definition.Icon</span>
+    <span class="building-body">
+        <span class="building-name">@Definition.Name</span>
+        <span class="building-cost">
+            @NumberFormat.Format(bulkCost)
+            @if (BulkAmount > 1) { <span class="bulk-tag">× @BulkAmount</span> }
+        </span>
+        <span class="building-info" title="@Definition.FlavorText">
+            @if (owned > 0)
+            {
+                <span>owns @owned</span>
+                <span>— @NumberFormat.Format(totalCps) cps</span>
+            }
+            else
+            {
+                <span>— @NumberFormat.Format(unitCps) cps each</span>
+            }
+        </span>
+    </span>
+    <span class="building-count">@owned</span>
+</button>
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter, EditorRequired] public BuildingDefinition Definition { get; set; } = default!;
+    [Parameter] public int BulkAmount { get; set; } = 1;
+    [Parameter, EditorRequired] public EventCallback<int> OnBuy { get; set; }
+}

@@ -1,0 +1,27 @@
+.golden-cookie {
+    position: fixed;
+    z-index: 100;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 3.5rem;
+    cursor: pointer;
+    filter: drop-shadow(0 0 12px rgba(255, 216, 87, 0.9));
+    animation: gc-float 2s ease-in-out infinite, gc-spin 8s linear infinite;
+    user-select: none;
+    transform: translate(-50%, -50%);
+}
+
+.golden-cookie:hover {
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+@keyframes gc-float {
+    0%, 100% { filter: drop-shadow(0 0 12px rgba(255, 216, 87, 0.9)); }
+    50% { filter: drop-shadow(0 0 24px rgba(255, 255, 150, 1)); }
+}
+
+@keyframes gc-spin {
+    from { rotate: 0deg; }
+    to { rotate: 360deg; }
+}

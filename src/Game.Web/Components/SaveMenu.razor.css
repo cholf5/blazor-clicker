@@ -1,0 +1,81 @@
+.save-menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+}
+
+.save-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f2e6cf;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 100ms;
+}
+
+.save-btn:hover { background: rgba(255, 255, 255, 0.16); }
+.save-btn.danger:hover { background: rgba(200, 60, 60, 0.4); border-color: rgba(200, 60, 60, 0.6); }
+
+.save-import {
+    flex-basis: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+}
+
+.save-import textarea {
+    width: 100%;
+    min-height: 5rem;
+    padding: 0.4rem;
+    background: #0d0603;
+    color: #f2e6cf;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.3rem;
+    font-family: monospace;
+    font-size: 0.7rem;
+    resize: vertical;
+}
+
+.save-import-actions { display: flex; gap: 0.4rem; }
+.save-import-actions button {
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 216, 87, 0.2);
+    color: #ffd857;
+    border: 1px solid rgba(255, 216, 87, 0.4);
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.save-import-actions button:hover { background: rgba(255, 216, 87, 0.35); }
+
+.save-error {
+    color: #ff8c8c;
+    font-size: 0.75rem;
+    padding: 0.2rem 0;
+}
+
+.save-toast {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.85);
+    color: #f2e6cf;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+    animation: toast-in 0.2s ease-out;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translate(-50%, 6px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}

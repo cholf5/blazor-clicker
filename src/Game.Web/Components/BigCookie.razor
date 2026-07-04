@@ -1,0 +1,29 @@
+@* Big central cookie the player clicks. Emits OnClick for each click and
+   drives a brief transform:scale animation via a tick counter used as a
+   render key. Floating "+N" numbers are spawned by the parent. *@
+
+<button class="big-cookie @(_bounce ? "bounce" : "")"
+        @onclick="HandleClick"
+        aria-label="Bake a cookie"
+        title="Click to bake a cookie">
+    <span class="big-cookie-emoji">🍪</span>
+</button>
+
+@code {
+    [Parameter, EditorRequired] public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private bool _bounce;
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        _bounce = true;
+        await OnClick.InvokeAsync(e);
+        // Reset bounce class shortly after so subsequent clicks retrigger the animation.
+        _ = InvokeAsync(async () =>
+        {
+            await Task.Delay(80);
+            _bounce = false;
+            StateHasChanged();
+        });
+    }
+}

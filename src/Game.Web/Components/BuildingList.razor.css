@@ -1,0 +1,47 @@
+.building-list {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.building-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.building-list-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #b39868;
+}
+
+.bulk-select {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.bulk-option {
+    padding: 0.25rem 0.6rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #a08765;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 100ms;
+}
+
+.bulk-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f2e6cf;
+}
+
+.bulk-option.active {
+    background: #ffd857;
+    color: #1c120a;
+    border-color: #ffd857;
+}

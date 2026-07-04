@@ -1,0 +1,20 @@
+@* Floating golden cookie overlay. Positioned absolutely via inline style
+   using ScreenX/Y (0..1 fractions). Auto-dismisses when the game clears
+   ActiveGolden. *@
+
+@if (State.ActiveGolden is { } cookie)
+{
+    <button class="golden-cookie"
+            style="@GetStyle(cookie)"
+            @onclick="() => State.ClickGoldenCookie()"
+            aria-label="Golden cookie!">
+        🌟
+    </button>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private static string GetStyle(GoldenCookie c) =>
+        $"left: {c.ScreenX * 100:0.##}%; top: {c.ScreenY * 100:0.##}%;";
+}

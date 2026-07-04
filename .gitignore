@@ -1,0 +1,47 @@
+# --- .NET ---
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+*.pidb
+.vs/
+
+# --- Publish output ---
+publish/
+out/
+dist/
+
+# --- Rider / VS Code ---
+.idea/
+.vscode/
+
+# --- Node (reserved, unused in current stack) ---
+node_modules/
+.pnp/
+.pnp.js
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+coverage/
+.vite/
+.turbo/
+
+# --- Original Cookie Clicker reference (never redistribute) ---
+# The maintainer keeps a local copy of the original game's source and assets
+# for reference. It is NOT part of this repository and must never be committed.
+# See NOTICE.md for the project's non-redistribution policy.
+cookieclicker/
+cookieclicker-*/
+
+# --- OS ---
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+

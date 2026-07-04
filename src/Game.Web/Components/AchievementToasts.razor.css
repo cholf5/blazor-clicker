@@ -1,0 +1,38 @@
+.ach-toasts {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    pointer-events: none;
+}
+
+.ach-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    background: linear-gradient(180deg, rgba(255, 216, 87, 0.95), rgba(255, 165, 60, 0.95));
+    color: #1c120a;
+    border-radius: 0.4rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    min-width: 16rem;
+    animation: ach-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.ach-toast-icon { font-size: 2rem; }
+.ach-toast-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    opacity: 0.7;
+}
+.ach-toast-name { font-weight: 700; font-size: 0.95rem; }
+
+@keyframes ach-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}

@@ -1,0 +1,106 @@
+@* Save / load / export / import / wipe controls. Owns its own textarea
+   for the paste-in-a-string flow. *@
+
+@inject SaveCoordinator Save
+
+<div class="save-menu">
+    <button class="save-btn" @onclick="OnManualSave" title="Save now">💾 Save</button>
+    <button class="save-btn" @onclick="OnExport" title="Copy save to clipboard">📤 Export</button>
+    <button class="save-btn" @onclick="ToggleImport" title="Paste an exported save">📥 Import</button>
+    <button class="save-btn danger" @onclick="OnWipe" title="Delete save and start over">🗑 Wipe</button>
+
+    @if (_showImport)
+    {
+        <div class="save-import">
+            <textarea @bind="_importText" placeholder="Paste an exported save…"></textarea>
+            <div class="save-import-actions">
+                <button @onclick="OnImport">Load</button>
+                <button @onclick="() => _showImport = false">Cancel</button>
+            </div>
+            @if (!string.IsNullOrEmpty(_importError))
+            {
+                <div class="save-error">@_importError</div>
+            }
+        </div>
+    }
+
+    @if (_toast is not null)
+    {
+        <div class="save-toast">@_toast</div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnStateChanged { get; set; }
+
+    private bool _showImport;
+    private string _importText = "";
+    private string? _importError;
+    private string? _toast;
+
+    private async Task OnManualSave()
+    {
+        await Save.SaveNowAsync();
+        FlashToast("Saved.");
+    }
+
+    private async Task OnExport()
+    {
+        var s = Save.Export();
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", s);
+            FlashToast("Exported save copied to clipboard.");
+        }
+        catch
+        {
+            FlashToast("Export ready — paste it somewhere safe.");
+        }
+    }
+
+    private void ToggleImport() => _showImport = !_showImport;
+
+    private async Task OnImport()
+    {
+        _importError = null;
+        try
+        {
+            await Save.ImportAsync(_importText);
+            _showImport = false;
+            _importText = "";
+            await OnStateChanged.InvokeAsync();
+            FlashToast("Save loaded.");
+        }
+        catch (Exception ex)
+        {
+            _importError = "Couldn't load save: " + ex.Message;
+        }
+    }
+
+    private async Task OnWipe()
+    {
+        if (!await Confirm("Really wipe your save and start over?")) return;
+        await Save.WipeAsync();
+        await OnStateChanged.InvokeAsync();
+        FlashToast("Save wiped.");
+    }
+
+    private async Task<bool> Confirm(string message)
+    {
+        try { return await JS.InvokeAsync<bool>("confirm", message); }
+        catch { return true; }
+    }
+
+    private void FlashToast(string message)
+    {
+        _toast = message;
+        _ = InvokeAsync(async () =>
+        {
+            await Task.Delay(2000);
+            _toast = null;
+            StateHasChanged();
+        });
+    }
+
+    [Inject] IJSRuntime JS { get; set; } = default!;
+}
