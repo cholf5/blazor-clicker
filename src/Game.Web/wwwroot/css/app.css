@@ -9,6 +9,44 @@ html, body {
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Themed scrollbars, matching the warm dark palette used across the game.
+   Firefox uses the standard `scrollbar-*` properties; WebKit/Blink browsers
+   use the `::-webkit-scrollbar` pseudo-elements below. */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #6b4f2d transparent;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(#7a5a3a, #5a4025);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(#b39868, #7a5a3a);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(#ffd857, #b39868);
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
 button {
     font-family: inherit;
     color: inherit;
