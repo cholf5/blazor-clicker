@@ -70,8 +70,20 @@ it's gone.
 
 ## License note
 
-The `LICENSE` file in this repository applies to **the code we wrote**
-(Blazor components, C# domain layer, tests, build scripts, documentation).
-It does not — and cannot — grant any rights over the game design,
-gameplay, or trademarks of the original Cookie Clicker. See `LICENSE`
-and the "Attribution and scope" section of `README.md` for details.
+The `LICENSE` file in this repository is the plain MIT License and applies
+to **the code we wrote** (Blazor components, C# domain layer, tests, build
+scripts, documentation).
+
+The MIT License does not — and cannot — grant any rights over:
+
+* the name "Cookie Clicker" (a trademark of its owners);
+* the game design, mechanics, numeric balance, or artistic direction of the
+  original Cookie Clicker by Julien "Orteil" Thiennot / DashNet;
+* any imagery, audio, or text from the original game (none of which are
+  distributed in this repository — see the sections above).
+
+If you fork this repository, you inherit the same limitation: the MIT
+License lets you reuse *our code*, but the underlying game design remains
+the intellectual property of its original creators. Please read this
+NOTICE.md in full before redistributing.
+
