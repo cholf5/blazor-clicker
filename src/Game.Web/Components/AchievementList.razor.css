@@ -79,6 +79,34 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(2.4rem, 1fr));
     gap: 0.3rem;
+    /* Cap the panel height so 300+ tiles don't stretch the whole column;
+       overflow scrolls inside the box, matching the original's fixed panel. */
+    max-height: 16rem;
+    overflow-y: auto;
+    /* Room so tiles never sit flush against the scrollbar. */
+    padding-right: 0.25rem;
+    /* Firefox: thin bar tinted to match the WebKit thumb/track below. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 216, 87, 0.3) rgba(0, 0, 0, 0.25);
+}
+
+/* Slim, themed scrollbar so it blends with the panel. */
+.achievement-grid::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
+.achievement-grid::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 0.4rem;
+}
+
+.achievement-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 216, 87, 0.3);
+    border-radius: 0.4rem;
+}
+
+.achievement-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 216, 87, 0.5);
 }
 
 .achievement-tile {
