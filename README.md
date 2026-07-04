@@ -99,7 +99,8 @@ cookie-clicker-remake/
 │   ├── decisions/                    ADR
 │   │   ├── 0001-technology-stack.md
 │   │   ├── 0002-implementation.md
-│   │   └── 0003-late-game-and-polish.md
+│   │   ├── 0003-late-game-and-polish.md
+│   │   └── 0004-scope-boundary.md
 │   └── retrospectives/               交付复盘
 │       └── 0001-blazor-remake.md
 ├── .github/workflows/
@@ -180,8 +181,8 @@ dotnet publish src/Game.Web/Game.Web.csproj -c Release -o publish
 - [x] M0 骨架搭建（Blazor solution + Game.Core + Game.Web + xUnit + CI）
 - [x] M1 建筑系统（18 座建筑：早期 12 + 后期 6 · 单/十/百批量购买 · 成本递增公式）
 - [x] M2 升级系统（每座建筑 4 档分级 + 4 档点击强化 + 3 档 Cursor 协同 + 4 档全局 CPS 加成）
-- [x] M3 成就系统（90+ 条 · 累计烘焙 / 拥有数 / 点击 / 金饼干 / 升级 / 糖块 / 转生里程碑 · 解锁弹窗）
-- [x] M4 存档系统（版本化 JSON v2 · localStorage 15s 自动保存 · Base64 导入导出 · 步进迁移 · 一键清档）
+- [x] M3 成就系统（330+ 条 · 累计烘焙 / 拥有数 / CPS / 点击 / 手工 / 金饼干 / 连击 / 升级 / 糖块 / 转生 / 游玩时长里程碑 · 分类 tab · 解锁弹窗）
+- [x] M4 存档系统（版本化 JSON v3 · localStorage 15s 自动保存 · Base64 导入导出 · 步进迁移 · 一键清档）
 - [x] 金饼干（Lucky / Frenzy / Click Frenzy · 13s 存续 · 60-300s 冷却）
 - [x] **M5 后期系统 + 手感**（[ADR 0003](docs/decisions/0003-late-game-and-polish.md)）
   - 音效（Web Audio 合成，无外部素材）+ 静音持久化
@@ -201,5 +202,7 @@ dotnet publish src/Game.Web/Game.Web.csproj -c Release -o publish
 - **2026-07-04** 用户在 Rider F5 实机验证："完全能玩"，无阻断性 bug。对这次交付做了复盘，拆出"真正起作用的 5 个条件"与"没那么神的 5 处诚实清单"，并给出复现配方。详见 [复盘 0001](docs/retrospectives/0001-blazor-remake.md)。
 - **2026-07-04** 为公开发布做仓库整理：清理逐字文案、加 NOTICE + LICENSE、把 Blazor 项目从 `blazor/` 子目录提升到根目录、移除原版参考代码副本、重置 git 历史。
 - **2026-07-04** M5 完成，补齐 ADR 0002 里明确推迟的音效 / 粒子 / 新闻栏 / 后期建筑（Antimatter condenser → Idleverse）/ 糖块 / 转生 / 离线收益。存档 schema 升到 v2，51/51 xUnit 全绿，`dotnet build Game.slnx` 0 警告 0 错误。设计取舍见 [ADR 0003](docs/decisions/0003-late-game-and-polish.md)。
+- **2026-07-04** 大幅扩充成就（98 → 334）：对齐原版建筑拥有 / 烘焙档位，新增 CPS / 手工烘焙 / 连击 / 游玩时长等纯增长轴成就族，存档 schema 升到 v3，加成就分类 tab。65/65 xUnit 全绿。
+- **2026-07-04** 明确项目范围边界：**只做「纯指数增长玩具」形态**，主动拒绝 Garden / Stock Market / Pantheon / Grimoire / 季节活动等主动管理型后期系统，不以「成就数量追平原版」为目标。推理见 [ADR 0004](docs/decisions/0004-scope-boundary.md)。
 
 > 完整的 ADR 索引、复盘索引和文档结构见 [`docs/README.md`](docs/README.md)。
