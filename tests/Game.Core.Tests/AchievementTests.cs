@@ -82,6 +82,40 @@ public class AchievementTests
         Assert.DoesNotContain("baked_1000000000000", s.UnlockedAchievements);
     }
 
+    [Fact]
+    public void ReachingCps_UnlocksCpsMilestone()
+    {
+        // One grandma produces >= 1 cps, enough for the first cps tier.
+        var s = new GameState { Cookies = double.MaxValue };
+        s.BuyBuilding(BuildingId.Grandma);
+        Assert.True(s.CurrentCps() >= 1);
+
+        s.Tick(0.001);
+        Assert.Contains("cps_1", s.UnlockedAchievements);
+    }
+
+    [Fact]
+    public void CpsMilestone_StaysLocked_WhenIdle()
+    {
+        var s = new GameState();
+        s.Tick(0.001);
+        Assert.DoesNotContain("cps_1", s.UnlockedAchievements);
+    }
+
+    [Fact]
+    public void OwningEveryUpgrade_UnlocksCompleteArsenal()
+    {
+        var s = new GameState { Cookies = double.MaxValue };
+        // Buying is gated by unlock predicates, so seed the full set directly
+        // through a save load instead of trying to satisfy every prerequisite.
+        foreach (var up in Game.Core.Data.Upgrades.All)
+            s.PurchasedUpgrades.Add(up.Id);
+
+        s.Tick(0.001);
+        Assert.Equal(83, s.PurchasedUpgrades.Count);
+        Assert.Contains("upgrades_83", s.UnlockedAchievements);
+    }
+
     // Builds a GameState with a specific lifetime-baked total by round-tripping
     // through the save system (TotalCookiesBaked is not directly settable).
     private static GameState LoadWithTotalBaked(double total)
