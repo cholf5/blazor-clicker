@@ -6,11 +6,18 @@
 
 <PageTitle>Cookie Clicker — Blazor Fan Remake (unofficial)</PageTitle>
 
+<!-- Full-width masthead: the news headline spans all columns, out of the
+     cookie's focal path. Stands in for the original's center-top headline,
+     which we can't reuse because our center column is the shop, not the
+     (unimplemented) building visualization. -->
+<div class="game-masthead">
+    <NewsTicker @ref="_news" State="Save.State" />
+</div>
+
 <div class="game-shell">
     <!-- Left column: Big cookie + stats -->
     <section class="game-left">
         <StatsPanel State="Save.State" />
-        <NewsTicker @ref="_news" State="Save.State" />
         <div class="cookie-area">
             <BigCookie OnClick="OnClickCookie" />
             @foreach (var f in _floaters)

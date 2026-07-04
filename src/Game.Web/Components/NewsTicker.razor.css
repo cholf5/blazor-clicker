@@ -1,14 +1,15 @@
 .news-ticker {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    margin: 0.5rem 0.75rem 0;
-    padding: 6px 10px;
-    background: rgba(20, 12, 4, 0.55);
-    border: 1px solid rgba(180, 140, 70, 0.35);
-    border-radius: 6px;
+    margin: 0;
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
     color: #efd8a7;
-    font-size: 12px;
+    font-size: 13px;
     font-style: italic;
     line-height: 1.35;
     overflow: hidden;
@@ -22,7 +23,7 @@
 }
 
 .news-track {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     overflow: hidden;
     position: relative;
     height: 1.35em;
