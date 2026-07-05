@@ -1,23 +1,20 @@
-/* Stationary outer container — sits behind the cookie (z-index:1) and
-   receives hover events for the tooltip. Stays still so the tooltip anchor
-   never moves, eliminating "chasing" jitter as the fingers rotate. The actual
-   spin lives on the inner wrapper. */
+/* Decorative ring of fingers behind the cookie. pointer-events:none ensures
+   it doesn't intercept clicks or block the milk layer's tooltip. The inner
+   spinner does the actual 60s rotation; the outer container stays fixed. */
 .cursor-ring {
     position: absolute;
     inset: 0;
     z-index: 1;
-    cursor: help;
+    pointer-events: none;
     /* Keep the spinner centred on the cookie regardless of container aspect. */
     display: grid;
     place-items: center;
 }
 
-/* Inner wrapper actually spins; fingers live inside this. Pointer events are
-   transparent here so only the outer stationary container captures hover. */
+/* Inner wrapper that actually spins; fingers live inside this. */
 .cursor-ring-spinner {
     position: absolute;
     inset: 0;
-    pointer-events: none;
     animation: cursor-ring-spin 60s linear infinite;
     display: grid;
     place-items: center;
