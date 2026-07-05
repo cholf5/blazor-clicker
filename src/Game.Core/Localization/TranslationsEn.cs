@@ -16,6 +16,14 @@ public static class TranslationsEn
 {
     public static readonly IReadOnlyDictionary<string, string> Entries = new Dictionary<string, string>
     {
+        // ---- Options menu (modal shell + section headings) ------------------
+        ["ui.options.open"] = "Options",
+        ["ui.options.title"] = "Options",
+        ["ui.options.close"] = "Close",
+        ["ui.options.section_data"] = "Save data",
+        ["ui.options.section_sound"] = "Sound",
+        ["ui.options.section_language"] = "Language",
+
         // ---- Language selector (shown in each language's own script) --------
         ["ui.settings.language"] = "Language",
         ["ui.language.system"] = "System default",

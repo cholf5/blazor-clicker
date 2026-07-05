@@ -1,0 +1,170 @@
+/* Compact gear button that sits at the trailing edge of the top masthead. */
+.options-open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    color: #d7bd8b;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.3rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 100ms, color 100ms, border-color 100ms;
+}
+
+.options-open-btn:hover {
+    color: #ffdc86;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(182, 135, 60, 0.6);
+}
+
+/* Modal shell — mirrors OfflineDialog's backdrop so the two feel of a piece.
+   The backdrop (not the dialog) owns scrolling: if the dialog itself clipped
+   overflow, the language dropdown — an absolutely-positioned child that extends
+   past the dialog edge — would get cut off. So the dialog keeps natural height
+   and the backdrop scrolls when content is taller than the viewport. */
+.options-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 6, 2, 0.7);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 30px 20px;
+    z-index: 45;
+    animation: options-fade 200ms ease-out;
+}
+
+.options-dialog {
+    position: relative;
+    width: min(420px, 100%);
+    margin: auto;
+    background: linear-gradient(180deg, #3b2915 0%, #241608 100%);
+    border-radius: 12px;
+    padding: 20px 24px;
+    color: #ffedcf;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0 0 1px #b6873c;
+}
+
+.options-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.options-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #ffdc86;
+}
+
+.options-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f2e6cf;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.3rem;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.options-close:hover { background: rgba(255, 255, 255, 0.18); }
+
+.options-section {
+    padding: 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.options-section:first-of-type { border-top: none; }
+
+.options-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #d7bd8b;
+}
+
+.options-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.save-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f2e6cf;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.3rem;
+    cursor: pointer;
+    transition: background 100ms;
+}
+
+.save-btn:hover { background: rgba(255, 255, 255, 0.16); }
+.save-btn.danger:hover { background: rgba(200, 60, 60, 0.4); border-color: rgba(200, 60, 60, 0.6); }
+
+.save-import {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+}
+
+.save-import textarea {
+    width: 100%;
+    min-height: 5rem;
+    padding: 0.4rem;
+    background: #0d0603;
+    color: #f2e6cf;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.3rem;
+    font-family: monospace;
+    font-size: 0.7rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.save-import-actions { display: flex; gap: 0.4rem; }
+.save-import-actions button {
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 216, 87, 0.2);
+    color: #ffd857;
+    border: 1px solid rgba(255, 216, 87, 0.4);
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.save-import-actions button:hover { background: rgba(255, 216, 87, 0.35); }
+
+.save-error {
+    color: #ff8c8c;
+    font-size: 0.75rem;
+    padding: 0.2rem 0;
+}
+
+.options-toast {
+    position: sticky;
+    bottom: 0;
+    margin-top: 12px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.85);
+    color: #f2e6cf;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    animation: options-fade 0.2s ease-out;
+}
+
+@keyframes options-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

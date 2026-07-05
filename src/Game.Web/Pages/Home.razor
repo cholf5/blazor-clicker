@@ -11,9 +11,12 @@
 <!-- Full-width masthead: the news headline spans all columns, out of the
      cookie's focal path. Stands in for the original's center-top headline,
      which we can't reuse because our center column is the shop, not the
-     (unimplemented) building visualization. -->
+     (unimplemented) building visualization. The options gear sits at the far
+     right — away from the cookie's click zone and the gameplay column, where
+     players expect settings to live. -->
 <div class="game-masthead">
     <NewsTicker @ref="_news" State="Save.State" />
+    <OptionsMenu OnStateChanged="OnStateReplaced" />
 </div>
 
 <div class="game-shell">
@@ -50,7 +53,6 @@
         <SugarLumpWidget State="Save.State" />
         <AscendPanel State="Save.State" OnAscended="OnAscended" />
         <AchievementList State="Save.State" />
-        <SaveMenu OnStateChanged="OnStateReplaced" />
     </aside>
 </div>
 

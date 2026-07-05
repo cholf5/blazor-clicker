@@ -1,21 +1,53 @@
-@* Language selector dropdown. Lets the player switch display language or
-   revert to following the system language. Persists the choice via
+@* Language selector. Renders a fully custom dropdown (trigger button + drawn
+   list) rather than a native <select>, because the browser paints a native
+   select's popup with the OS palette — impossible to theme. This keeps the
+   whole control on the site's dark-brown / gold theme. Persists the choice via
    LanguageService and re-renders the whole app through OnLanguageChanged. *@
 
 @inject LanguageService Lang
 @inject ILocalizer Loc
 
-<div class="language-select" title="@Loc["ui.settings.language"]">
-    <span class="language-icon">🌐</span>
-    <select @onchange="OnChange" value="@CurrentValue">
-        <option value="system">@Loc["ui.language.system"]</option>
-        <option value="english">@Loc["ui.language.english"]</option>
-        <option value="zh_hans">@Loc["ui.language.zh_hans"]</option>
-        <option value="zh_hant">@Loc["ui.language.zh_hant"]</option>
-    </select>
+<div class="language-select">
+    <button type="button" class="language-trigger" @onclick="Toggle" title="@Loc["ui.settings.language"]">
+        <span class="language-icon">🌐</span>
+        <span class="language-current">@CurrentLabel</span>
+        <span class="language-caret @(_open ? "open" : "")">▾</span>
+    </button>
+
+    @if (_open)
+    {
+        @* Transparent full-screen catcher: a click anywhere outside the list
+           closes the dropdown without needing a JS document listener. *@
+        <div class="language-scrim" @onclick="Close"></div>
+        <ul class="language-list">
+            @foreach (var opt in _options)
+            {
+                <li>
+                    <button type="button"
+                            class="language-option @(opt.Value == CurrentValue ? "selected" : "")"
+                            @onclick="() => Select(opt.Value)">
+                        <span class="language-check">@(opt.Value == CurrentValue ? "✓" : "")</span>
+                        @Loc[opt.LabelKey]
+                    </button>
+                </li>
+            }
+        </ul>
+    }
 </div>
 
 @code {
+    private bool _open;
+
+    private sealed record Option(string Value, string LabelKey);
+
+    private static readonly Option[] _options =
+    [
+        new("system", "ui.language.system"),
+        new("english", "ui.language.english"),
+        new("zh_hans", "ui.language.zh_hans"),
+        new("zh_hant", "ui.language.zh_hant"),
+    ];
+
     // "system" when following the browser; otherwise the explicit choice.
     private string CurrentValue => Lang.IsFollowingSystem
         ? "system"
@@ -26,9 +58,15 @@
             _ => "english",
         };
 
-    private async Task OnChange(ChangeEventArgs e)
+    private string CurrentLabel =>
+        Loc[_options.First(o => o.Value == CurrentValue).LabelKey];
+
+    private void Toggle() => _open = !_open;
+    private void Close() => _open = false;
+
+    private async Task Select(string value)
     {
-        var value = e.Value?.ToString();
+        _open = false;
         Language? choice = value switch
         {
             "english" => Language.English,

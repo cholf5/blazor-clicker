@@ -1,11 +1,26 @@
 .language-select {
+    position: relative;
+    display: inline-block;
+}
+
+.language-trigger {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    min-width: 140px;
+    padding: 5px 10px;
     background: #1c130a;
+    color: #ffdc86;
     border: 1px solid #5c4426;
     border-radius: 6px;
-    padding: 3px 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 120ms, background 120ms;
+}
+
+.language-trigger:hover {
+    border-color: #b6873c;
+    background: #241608;
 }
 
 .language-icon {
@@ -13,18 +28,78 @@
     line-height: 1;
 }
 
-.language-select select {
-    background: transparent;
-    color: #ffdc86;
-    border: none;
-    font-size: 13px;
-    cursor: pointer;
-    outline: none;
+.language-current {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
 }
 
-/* The dropdown popup itself renders with the OS palette, so give the options a
-   readable dark-on-light fallback rather than gold-on-transparent. */
-.language-select option {
-    color: #1c130a;
-    background: #f4e9d0;
+.language-caret {
+    font-size: 11px;
+    color: #d7bd8b;
+    transition: transform 120ms;
+}
+
+.language-caret.open {
+    transform: rotate(180deg);
+}
+
+/* Transparent click-catcher behind the list. */
+.language-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+}
+
+.language-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 11;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    background: linear-gradient(180deg, #33240f 0%, #241608 100%);
+    border: 1px solid #b6873c;
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+    animation: language-pop 120ms ease-out;
+}
+
+.language-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 9px;
+    background: transparent;
+    color: #f2e6cf;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 100ms;
+}
+
+.language-option:hover {
+    background: rgba(255, 216, 87, 0.14);
+}
+
+.language-option.selected {
+    color: #ffdc86;
+    background: rgba(255, 216, 87, 0.08);
+}
+
+.language-check {
+    width: 12px;
+    flex-shrink: 0;
+    color: #ffd857;
+    font-size: 12px;
+}
+
+@keyframes language-pop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
 }

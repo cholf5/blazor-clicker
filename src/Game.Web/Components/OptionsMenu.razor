@@ -1,0 +1,165 @@
+@* Options entry point: a single gear button that opens a modal gathering all
+   the "rarely touched, orthogonal to gameplay" controls — save data
+   (save/export/import/wipe), sound, and language — out of the gameplay column.
+   Owns its own import textarea for the paste-in-a-string flow. *@
+
+@inject SaveCoordinator Save
+@inject ILocalizer Loc
+@implements IDisposable
+
+<button class="options-open-btn" @onclick="Open" title="@Loc["ui.options.open"]">
+    ⚙️ @Loc["ui.options.open"]
+</button>
+
+@if (_open)
+{
+    <div class="options-backdrop" @onclick="Close">
+        <div class="options-dialog" @onclick:stopPropagation="true">
+            <div class="options-header">
+                <h2>@Loc["ui.options.title"]</h2>
+                <button class="options-close" @onclick="Close" title="@Loc["ui.options.close"]">✕</button>
+            </div>
+
+            <section class="options-section">
+                <h3>@Loc["ui.options.section_data"]</h3>
+                <div class="options-buttons">
+                    <button class="save-btn" @onclick="OnManualSave" title="@Loc["ui.save.save_title"]">💾 @Loc["ui.save.save"]</button>
+                    <button class="save-btn" @onclick="OnExport" title="@Loc["ui.save.export_title"]">📤 @Loc["ui.save.export"]</button>
+                    <button class="save-btn" @onclick="ToggleImport" title="@Loc["ui.save.import_title"]">📥 @Loc["ui.save.import"]</button>
+                    <button class="save-btn danger" @onclick="OnWipe" title="@Loc["ui.save.wipe_title"]">🗑 @Loc["ui.save.wipe"]</button>
+                </div>
+
+                @if (_showImport)
+                {
+                    <div class="save-import">
+                        <textarea @bind="_importText" placeholder="@Loc["ui.save.import_placeholder"]"></textarea>
+                        <div class="save-import-actions">
+                            <button @onclick="OnImport">@Loc["ui.save.load"]</button>
+                            <button @onclick="() => _showImport = false">@Loc["ui.save.cancel"]</button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(_importError))
+                        {
+                            <div class="save-error">@_importError</div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="options-section">
+                <h3>@Loc["ui.options.section_sound"]</h3>
+                <MuteButton />
+            </section>
+
+            <section class="options-section">
+                <h3>@Loc["ui.options.section_language"]</h3>
+                <LanguageSelect />
+            </section>
+
+            @if (_toast is not null)
+            {
+                <div class="options-toast">@_toast</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback OnStateChanged { get; set; }
+
+    private bool _open;
+    private bool _showImport;
+    private string _importText = "";
+    private string? _importError;
+    private string? _toast;
+
+    // The modal lives inside its own component boundary, so a language switch made
+    // from the LanguageSelect within it re-renders that child (and Home) but not
+    // this shell. Subscribe so the modal's own chrome — title, section headings,
+    // button labels — re-localizes in place instead of only after a reopen.
+    protected override void OnInitialized()
+    {
+        Loc.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Loc.OnLanguageChanged -= OnLanguageChanged;
+    }
+
+    private void Open() => _open = true;
+
+    private void Close()
+    {
+        _open = false;
+        _showImport = false;
+        _importError = null;
+    }
+
+    private async Task OnManualSave()
+    {
+        await Save.SaveNowAsync();
+        FlashToast(Loc["ui.save.saved"]);
+    }
+
+    private async Task OnExport()
+    {
+        var s = Save.Export();
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", s);
+            FlashToast(Loc["ui.save.exported"]);
+        }
+        catch
+        {
+            FlashToast(Loc["ui.save.export_manual"]);
+        }
+    }
+
+    private void ToggleImport() => _showImport = !_showImport;
+
+    private async Task OnImport()
+    {
+        _importError = null;
+        try
+        {
+            await Save.ImportAsync(_importText);
+            _showImport = false;
+            _importText = "";
+            await OnStateChanged.InvokeAsync();
+            FlashToast(Loc["ui.save.loaded"]);
+        }
+        catch (Exception ex)
+        {
+            _importError = Loc.Format("ui.save.import_error", ex.Message);
+        }
+    }
+
+    private async Task OnWipe()
+    {
+        if (!await Confirm(Loc["ui.save.wipe_confirm"])) return;
+        await Save.WipeAsync();
+        await OnStateChanged.InvokeAsync();
+        FlashToast(Loc["ui.save.wiped"]);
+    }
+
+    private async Task<bool> Confirm(string message)
+    {
+        try { return await JS.InvokeAsync<bool>("confirm", message); }
+        catch { return true; }
+    }
+
+    private void FlashToast(string message)
+    {
+        _toast = message;
+        _ = InvokeAsync(async () =>
+        {
+            await Task.Delay(2000);
+            _toast = null;
+            StateHasChanged();
+        });
+    }
+
+    [Inject] IJSRuntime JS { get; set; } = default!;
+}

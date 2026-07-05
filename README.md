@@ -80,7 +80,7 @@ cookie-clicker-remake/
 │       ├── Components/               BigCookie, StatsPanel, BuildingList,
 │       │                             BuildingRow, UpgradeStore,
 │       │                             AchievementList, GoldenCookieLayer,
-│       │                             SaveMenu, AchievementToasts,
+│       │                             OptionsMenu, AchievementToasts,
 │       │                             SugarLumpWidget, AscendPanel,
 │       │                             NewsTicker, OfflineDialog, MuteButton
 │       ├── Services/

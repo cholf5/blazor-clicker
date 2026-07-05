@@ -14,6 +14,14 @@ public static class TranslationsZhHans
 {
     public static readonly IReadOnlyDictionary<string, string> Entries = new Dictionary<string, string>
     {
+        // ---- Options menu (modal shell + section headings) ------------------
+        ["ui.options.open"] = "选项",
+        ["ui.options.title"] = "选项",
+        ["ui.options.close"] = "关闭",
+        ["ui.options.section_data"] = "存档数据",
+        ["ui.options.section_sound"] = "声音",
+        ["ui.options.section_language"] = "语言",
+
         // ---- Language selector ----------------------------------------------
         ["ui.settings.language"] = "语言",
         ["ui.language.system"] = "跟随系统",
