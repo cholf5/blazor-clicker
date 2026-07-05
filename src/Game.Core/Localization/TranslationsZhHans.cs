@@ -61,9 +61,9 @@ public static class TranslationsZhHans
         ["ui.unit.cps"] = "{0} cps",
 
         // ---- Upgrade store --------------------------------------------------
-        ["ui.upgrades.title"] = "升级",
+        ["ui.upgrades.title"] = "科技",
         ["ui.upgrades.count"] = "{0} 项可购买",
-        ["ui.upgrades.empty"] = "持续点击并购买建筑以解锁升级。",
+        ["ui.upgrades.empty"] = "持续点击并购买建筑以解锁科技。",
         ["ui.tooltip.effect"] = "效果",
         ["ui.effect.building_multiplier"] = "×{0} {1} 产出",
         ["ui.effect.click_multiplier"] = "×{0} 点击威力",
@@ -80,8 +80,8 @@ public static class TranslationsZhHans
         ["ui.milk.title"] = "牛奶",
         ["ui.milk.level"] = "牛奶等级",
         ["ui.milk.effect"] = "产量加成",
-        ["ui.milk.flavor"] = "每解锁一个成就，牛奶都会上涨。牛奶本身不产生任何 CPS——是你的猫咪升级把它转化成了额外产量。",
-        ["ui.milk.flavor_none"] = "每解锁一个成就，牛奶都会上涨。但牛奶本身不产生任何东西：在你购买猫咪升级之前，加成会一直是 ×1。猫咪升级会把牛奶转化为额外的饼干，去「升级」面板里找找看。",
+        ["ui.milk.flavor"] = "每解锁一个成就，牛奶都会上涨。牛奶本身不产生任何 CPS——是你的猫咪科技把它转化成了额外产量。",
+        ["ui.milk.flavor_none"] = "每解锁一个成就，牛奶都会上涨。但牛奶本身不产生任何东西：在你购买猫咪科技之前，加成会一直是 ×1。猫咪科技会把牛奶转化为额外的饼干，去「科技」面板里找找看。",
 
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "成就",
@@ -96,7 +96,7 @@ public static class TranslationsZhHans
         ["category.production.label"] = "产量",
         ["category.clicking.label"] = "点击",
         ["category.golden.label"] = "黄金饼干",
-        ["category.upgrades.label"] = "升级",
+        ["category.upgrades.label"] = "科技",
         ["category.sugar.label"] = "糖块",
         ["category.prestige.label"] = "威望",
         ["category.dedication.label"] = "投入",
@@ -112,7 +112,7 @@ public static class TranslationsZhHans
         // ---- Ascend panel ---------------------------------------------------
         ["ui.ascend.title"] = "转生",
         ["ui.ascend.current_title"] = "来自过往转生的永久 CPS 加成",
-        ["ui.ascend.confirm_body"] = "转生将清空当前进度——饼干、建筑与升级全部重置。成就、糖块与威望将保留。",
+        ["ui.ascend.confirm_body"] = "转生将清空当前进度——饼干、建筑与科技全部重置。成就、糖块与威望将保留。",
         ["ui.ascend.confirm_gain"] = "你将获得 +{0} 级威望。",
         ["ui.ascend.confirm_gain_one"] = "你将获得 +{0} 级威望。",
         ["ui.ascend.button"] = "转生",
@@ -285,8 +285,8 @@ public static class TranslationsZhHans
         ["achievement.combo.desc_one"] = "在狂热状态下点击一个黄金饼干。",
         ["achievement.handmade.desc"] = "通过手动点击制作 {0} 块饼干。",
         ["achievement.playtime.desc"] = "累计游玩 {0} 小时。",
-        ["achievement.upgrades.desc"] = "拥有 {0} 项升级。",
-        ["achievement.upgrades.desc_all"] = "拥有游戏中的全部升级。",
+        ["achievement.upgrades.desc"] = "拥有 {0} 项科技。",
+        ["achievement.upgrades.desc_all"] = "拥有游戏中的全部科技。",
         ["achievement.sugar.desc"] = "收获 {0} 块糖块。",
         ["achievement.ascend.desc"] = "转生 {0} 次。",
         ["achievement.prestige.desc"] = "累计获得 {0} 级威望。",

@@ -61,9 +61,9 @@ public static class TranslationsZhHant
         ["ui.unit.cps"] = "{0} cps",
 
         // ---- Upgrade store --------------------------------------------------
-        ["ui.upgrades.title"] = "升級",
+        ["ui.upgrades.title"] = "科技",
         ["ui.upgrades.count"] = "{0} 項可購買",
-        ["ui.upgrades.empty"] = "持續點擊並購買建築以解鎖升級。",
+        ["ui.upgrades.empty"] = "持續點擊並購買建築以解鎖科技。",
         ["ui.tooltip.effect"] = "效果",
         ["ui.effect.building_multiplier"] = "×{0} {1} 產出",
         ["ui.effect.click_multiplier"] = "×{0} 點擊威力",
@@ -80,8 +80,8 @@ public static class TranslationsZhHant
         ["ui.milk.title"] = "牛奶",
         ["ui.milk.level"] = "牛奶等級",
         ["ui.milk.effect"] = "產量加成",
-        ["ui.milk.flavor"] = "每解鎖一個成就，牛奶都會上漲。牛奶本身不產生任何 CPS——是你的貓咪升級把它轉化成了額外產量。",
-        ["ui.milk.flavor_none"] = "每解鎖一個成就，牛奶都會上漲。但牛奶本身不產生任何東西：在你購買貓咪升級之前，加成會一直是 ×1。貓咪升級會把牛奶轉化為額外的餅乾，去「升級」面板裡找找看。",
+        ["ui.milk.flavor"] = "每解鎖一個成就，牛奶都會上漲。牛奶本身不產生任何 CPS——是你的貓咪科技把它轉化成了額外產量。",
+        ["ui.milk.flavor_none"] = "每解鎖一個成就，牛奶都會上漲。但牛奶本身不產生任何東西：在你購買貓咪科技之前，加成會一直是 ×1。貓咪科技會把牛奶轉化為額外的餅乾，去「科技」面板裡找找看。",
 
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "成就",
@@ -96,7 +96,7 @@ public static class TranslationsZhHant
         ["category.production.label"] = "產量",
         ["category.clicking.label"] = "點擊",
         ["category.golden.label"] = "黃金餅乾",
-        ["category.upgrades.label"] = "升級",
+        ["category.upgrades.label"] = "科技",
         ["category.sugar.label"] = "糖塊",
         ["category.prestige.label"] = "威望",
         ["category.dedication.label"] = "投入",
@@ -112,7 +112,7 @@ public static class TranslationsZhHant
         // ---- Ascend panel ---------------------------------------------------
         ["ui.ascend.title"] = "轉生",
         ["ui.ascend.current_title"] = "來自過往轉生的永久 CPS 加成",
-        ["ui.ascend.confirm_body"] = "轉生將清空當前進度——餅乾、建築與升級全部重置。成就、糖塊與威望將保留。",
+        ["ui.ascend.confirm_body"] = "轉生將清空當前進度——餅乾、建築與科技全部重置。成就、糖塊與威望將保留。",
         ["ui.ascend.confirm_gain"] = "你將獲得 +{0} 級威望。",
         ["ui.ascend.confirm_gain_one"] = "你將獲得 +{0} 級威望。",
         ["ui.ascend.button"] = "轉生",
@@ -285,8 +285,8 @@ public static class TranslationsZhHant
         ["achievement.combo.desc_one"] = "在狂熱狀態下點擊一個黃金餅乾。",
         ["achievement.handmade.desc"] = "透過手動點擊製作 {0} 塊餅乾。",
         ["achievement.playtime.desc"] = "累計遊玩 {0} 小時。",
-        ["achievement.upgrades.desc"] = "擁有 {0} 項升級。",
-        ["achievement.upgrades.desc_all"] = "擁有遊戲中的全部升級。",
+        ["achievement.upgrades.desc"] = "擁有 {0} 項科技。",
+        ["achievement.upgrades.desc_all"] = "擁有遊戲中的全部科技。",
         ["achievement.sugar.desc"] = "收穫 {0} 塊糖塊。",
         ["achievement.ascend.desc"] = "轉生 {0} 次。",
         ["achievement.prestige.desc"] = "累計獲得 {0} 級威望。",
