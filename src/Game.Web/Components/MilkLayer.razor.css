@@ -1,0 +1,88 @@
+/* Milk sits at the bottom of the (position:relative, overflow:hidden) cookie
+   area and rises with milk level. Behind the cookie (low z-index) so clicks and
+   the big cookie itself stay unobstructed. */
+.milk {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    /* Receives hover so the tooltip can fire; the big cookie sits at a higher
+       z-index, so clicks on the cookie still land on the cookie, not the milk. */
+    cursor: help;
+    transition: height 600ms ease-out;
+    overflow: hidden;
+}
+
+/* Decorative layers never intercept pointer events — only the container does. */
+.milk-body,
+.milk-wave {
+    pointer-events: none;
+}
+
+/* Solid milk body fills everything below the animated surface strip. */
+.milk-body {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 18px;
+    bottom: 0;
+    background: linear-gradient(to bottom, #f7f4ec 0%, #efe9db 100%);
+}
+
+/* Each wave is a horizontally-tiled SVG sine crest, 200% wide so it can scroll
+   one full period and loop seamlessly. Three layers at different speeds and
+   opposite directions, plus a gentle vertical bob, give the surface a flowing,
+   liquid feel instead of a rigid edge. The fill under each crest matches the
+   milk body so the layers blend into one surface. */
+.milk-wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 24px;
+    background-repeat: repeat-x;
+    background-position: 0 bottom;
+    background-size: 160px 24px;
+    will-change: transform;
+}
+
+/* Back layer: palest, slowest, drifts right. */
+.milk-wave-back {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 24' preserveAspectRatio='none'%3E%3Cpath d='M0 12 C 40 2 40 2 80 12 S 120 22 160 12 V24 H0 Z' fill='%23f7f4ec' opacity='0.55'/%3E%3C/svg%3E");
+    animation: milk-flow-right 9s linear infinite, milk-bob 4.2s ease-in-out infinite;
+}
+
+/* Mid layer: medium tone and speed, drifts left. */
+.milk-wave-mid {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 24' preserveAspectRatio='none'%3E%3Cpath d='M0 14 C 40 4 40 4 80 14 S 120 24 160 14 V24 H0 Z' fill='%23f2ece0' opacity='0.8'/%3E%3C/svg%3E");
+    animation: milk-flow-left 6s linear infinite, milk-bob 3.4s ease-in-out infinite reverse;
+}
+
+/* Front layer: opaque milk, fastest, drifts right — this is the crisp surface. */
+.milk-wave-front {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 24' preserveAspectRatio='none'%3E%3Cpath d='M0 16 C 40 6 40 6 80 16 S 120 26 160 16 V24 H0 Z' fill='%23f7f4ec'/%3E%3C/svg%3E");
+    animation: milk-flow-right 4.5s linear infinite, milk-bob 2.8s ease-in-out infinite;
+}
+
+/* Scroll exactly one tile width (160px) so the repeat loops without a seam. */
+@keyframes milk-flow-right {
+    from { transform: translateX(-160px); }
+    to { transform: translateX(0); }
+}
+
+@keyframes milk-flow-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-160px); }
+}
+
+/* Subtle vertical swell layered on top of the horizontal scroll. */
+@keyframes milk-bob {
+    0%, 100% { margin-top: 0; }
+    50% { margin-top: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .milk { transition: none; }
+    .milk-wave { animation: none; }
+}

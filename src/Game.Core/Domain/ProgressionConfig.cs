@@ -20,6 +20,21 @@ public static class ProgressionConfig
     /// <summary>Total cookies baked (in the current run) required before the first sugar lump seed even appears.</summary>
     public const double SugarLumpUnlockThreshold = 1_000_000_000; // 1 billion
 
+    // ---- Milk --------------------------------------------------------------
+    /// <summary>
+    /// Milk gained per achievement unlocked, expressed as a fraction where
+    /// 1.0 == "100% milk". Matches Cookie Clicker's canonical +4% per achievement.
+    ///
+    /// Milk is a purely <b>passive, derived</b> quantity — it has no state of its
+    /// own (see <see cref="GameState.MilkFactor"/>, computed from the achievement
+    /// count) and demands no active management, so it stays inside the pure-growth
+    /// scope (ADR 0004) unlike Wrinklers/Garden. On its own it does nothing; the
+    /// Kitten upgrades (<see cref="UpgradeEffectKind.KittenMilkMultiplier"/>) turn
+    /// it into a global CPS multiplier, which is what keeps late-game growth from
+    /// stalling once the fixed multipliers are exhausted.
+    /// </summary>
+    public const double MilkPerAchievement = 0.04; // +4% milk per achievement
+
     // ---- Prestige / ascension ---------------------------------------------
     /// <summary>Cookies needed (per prestige level) — level = floor(cbrt(bakedThisRun / this)).</summary>
     public const double PrestigeCubeUnit = 1_000_000_000_000d; // 1 trillion

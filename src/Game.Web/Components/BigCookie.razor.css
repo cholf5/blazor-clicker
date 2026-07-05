@@ -8,6 +8,10 @@
     filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
     transition: transform 80ms ease-out;
     user-select: none;
+    /* Sit above the decorative milk layer (z-index:1) so the cookie stays
+       fully visible and clickable no matter how high the milk rises. */
+    position: relative;
+    z-index: 2;
 }
 
 .big-cookie-emoji {

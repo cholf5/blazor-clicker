@@ -349,12 +349,17 @@ public sealed class GameState
 
         // Global CPS multipliers stack multiplicatively.
         var globalMult = 1.0;
+        var milk = MilkFactor();
         foreach (var upId in PurchasedUpgrades)
         {
             if (!Upgrades.Exists(upId)) continue;
             var up = Upgrades.Get(upId);
             if (up.EffectKind == UpgradeEffectKind.GlobalCpsMultiplier)
                 globalMult *= up.EffectValue;
+            // Kitten upgrades convert milk into a multiplier: the more
+            // achievements unlocked, the stronger each kitten tier becomes.
+            else if (up.EffectKind == UpgradeEffectKind.KittenMilkMultiplier)
+                globalMult *= 1 + milk * up.EffectValue;
         }
 
         // Prestige & sugar lumps stack additively as a "% bonus", then apply
@@ -364,6 +369,37 @@ public sealed class GameState
             + SugarLumps * ProgressionConfig.SugarLumpCpsBonus;
 
         return total * globalMult * permanentBonus;
+    }
+
+    /// <summary>
+    /// Current milk amount as a fraction (1.0 == 100%), derived purely from the
+    /// number of achievements unlocked. Milk is not stored — it is recomputed on
+    /// demand like <see cref="CurrentCps"/>, so it needs no save migration and no
+    /// backfill. Kitten upgrades (<see cref="UpgradeEffectKind.KittenMilkMultiplier"/>)
+    /// read this to scale their global CPS bonus.
+    /// </summary>
+    public double MilkFactor() =>
+        UnlockedAchievements.Count * ProgressionConfig.MilkPerAchievement;
+
+    /// <summary>
+    /// The combined global CPS multiplier that milk currently contributes through
+    /// every purchased kitten upgrade (1.0 == no bonus). Mirrors the kitten branch
+    /// of <see cref="CurrentCpsRaw"/> exactly so the UI can show milk's real,
+    /// aggregate effect on production without duplicating the stacking rule.
+    /// Returns 1.0 when no kitten upgrades are owned (milk then does nothing yet).
+    /// </summary>
+    public double MilkCpsMultiplier()
+    {
+        var milk = MilkFactor();
+        var mult = 1.0;
+        foreach (var upId in PurchasedUpgrades)
+        {
+            if (!Upgrades.Exists(upId)) continue;
+            var up = Upgrades.Get(upId);
+            if (up.EffectKind == UpgradeEffectKind.KittenMilkMultiplier)
+                mult *= 1 + milk * up.EffectValue;
+        }
+        return mult;
     }
 
     /// <summary>CPS contributed by all copies of the given building, incl. its upgrades.</summary>

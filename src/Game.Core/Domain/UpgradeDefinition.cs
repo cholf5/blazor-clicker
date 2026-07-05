@@ -20,6 +20,14 @@ public enum UpgradeEffectKind
 
     /// <summary>Grants Cursor extra CPS per non-Cursor building owned (value = per-building bonus).</summary>
     CursorPerNonCursorBuilding,
+
+    /// <summary>
+    /// Global CPS multiplier that scales with milk (achievement count): the
+    /// effective factor is <c>1 + MilkFactor * EffectValue</c>. Unlike
+    /// <see cref="GlobalCpsMultiplier"/> (a fixed constant), this keeps growing as
+    /// the player unlocks more achievements — the "kitten" multiplier axis.
+    /// </summary>
+    KittenMilkMultiplier,
 }
 
 /// <summary>

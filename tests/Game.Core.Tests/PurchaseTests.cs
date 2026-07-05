@@ -97,23 +97,64 @@ public class PurchaseTests
     }
 
     [Fact]
-    public void GlobalCpsMultiplier_ScalesTotalCps()
+    public void KittenUpgrade_ScalesTotalCpsWithMilk()
     {
         var s = new GameState { Cookies = 100_000_000_000 };
         s.BuyBuilding(BuildingId.Grandma); // 1 CPS
-        // Bake 1M so global_kitten_helpers unlocks.
+        // Bake 1M so global_kitten_helpers unlocks (also unlocks achievements → milk).
+        s.BuyBuildingBulk(BuildingId.Grandma, 100);
         s.Cookies = 100_000_000;
-        var tCookies = s.TotalCookiesBaked;
-        // Force TotalCookiesBaked past 1M via internal path — via clicks would take forever.
-        // Use a big grandma tick.
-        s.BuyBuildingBulk(BuildingId.Grandma, 100); // more grandmas
-        s.Cookies = 100_000_000;
-        while (s.TotalCookiesBaked < 1_000_000) s.Tick(100);
+        var guard = 0;
+        while (s.TotalCookiesBaked < 1_000_000 && guard++ < 100_000) s.Tick(100);
         s.Cookies = 100_000_000_000;
 
+        // Milk must be non-zero for the kitten upgrade to do anything, otherwise
+        // this test would silently pass on a broken (no-op) implementation.
+        var milk = s.MilkFactor();
+        Assert.True(milk > 0, "expected some achievements unlocked so milk > 0");
+
         var before = s.CurrentCps();
-        Assert.True(s.BuyUpgrade("global_kitten_helpers"));
+        Assert.True(s.BuyUpgrade("global_kitten_helpers")); // +5% CPS per 100% milk
         var after = s.CurrentCps();
-        Assert.Equal(before * 1.1, after, 4);
+        Assert.Equal(before * (1 + milk * 0.05), after, 4);
+    }
+
+    [Fact]
+    public void MilkFactor_GrowsWithAchievements()
+    {
+        var s = new GameState();
+        Assert.Equal(0, s.MilkFactor(), 6);
+
+        // Buy a producer first (needs funds), then bake via ticks so achievements
+        // unlock. Guard the loop with a tick cap so a zero-CPS regression fails
+        // fast instead of spinning forever.
+        s.Cookies = 1_000_000;
+        s.BuyBuildingBulk(BuildingId.Grandma, 50);
+        var guard = 0;
+        while (s.TotalCookiesBaked < 100_000 && guard++ < 100_000) s.Tick(10);
+
+        Assert.True(s.UnlockedAchievements.Count > 0, "expected at least one achievement unlocked");
+        Assert.Equal(s.UnlockedAchievements.Count * 0.04, s.MilkFactor(), 6);
+        Assert.True(s.MilkFactor() > 0);
+    }
+
+    [Fact]
+    public void MilkCpsMultiplier_IsOne_UntilKittenOwned_ThenMatchesKittenStacking()
+    {
+        var s = new GameState { Cookies = 100_000_000_000 };
+        s.BuyBuildingBulk(BuildingId.Grandma, 100);
+        s.Cookies = 100_000_000;
+        var guard = 0;
+        while (s.TotalCookiesBaked < 1_000_000 && guard++ < 100_000) s.Tick(100);
+        s.Cookies = 100_000_000_000;
+
+        var milk = s.MilkFactor();
+        Assert.True(milk > 0);
+
+        // No kitten upgrade yet → milk does nothing to production.
+        Assert.Equal(1.0, s.MilkCpsMultiplier(), 6);
+
+        Assert.True(s.BuyUpgrade("global_kitten_helpers")); // 0.05 per 100% milk
+        Assert.Equal(1 + milk * 0.05, s.MilkCpsMultiplier(), 6);
     }
 }

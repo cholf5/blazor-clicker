@@ -68,12 +68,20 @@ public static class TranslationsZhHant
         ["ui.effect.building_multiplier"] = "×{0} {1} 產出",
         ["ui.effect.click_multiplier"] = "×{0} 點擊威力",
         ["ui.effect.global_multiplier"] = "×{0} 全部產量",
+        ["ui.effect.kitten"] = "×{0} 全部產量（每 100% 牛奶 +{1}%）",
         ["ui.effect.cursor_synergy"] = "每座非游標建築 +{0} 游標 cps",
         ["ui.effect.building_fallback"] = "建築",
         ["ui.upgrade_category.building"] = "建築",
         ["ui.upgrade_category.cursor"] = "游標",
         ["ui.upgrade_category.clicking"] = "點擊",
         ["ui.upgrade_category.kitten"] = "貓咪",
+
+        // ---- Milk (decorative pool + tooltip) -------------------------------
+        ["ui.milk.title"] = "牛奶",
+        ["ui.milk.level"] = "牛奶等級",
+        ["ui.milk.effect"] = "產量加成",
+        ["ui.milk.flavor"] = "每解鎖一個成就，牛奶都會上漲。牛奶本身不產生任何 CPS——是你的貓咪升級把它轉化成了額外產量。",
+        ["ui.milk.flavor_none"] = "每解鎖一個成就，牛奶都會上漲。但牛奶本身不產生任何東西：在你購買貓咪升級之前，加成會一直是 ×1。貓咪升級會把牛奶轉化為額外的餅乾，去「升級」面板裡找找看。",
 
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "成就",
@@ -249,13 +257,13 @@ public static class TranslationsZhHant
         ["upgrade.cursor_billion_fingers.name"] = "助力之手 III",
         ["upgrade.cursor_billion_fingers.desc"] = "將助力之手的加成再提升 10 倍。",
         ["upgrade.global_kitten_helpers.name"] = "貓咪學徒",
-        ["upgrade.global_kitten_helpers.desc"] = "全域 CPS 乘以 1.10。",
+        ["upgrade.global_kitten_helpers.desc"] = "你的牛奶（隨解鎖成就而上漲）從此開始提升全部產量：每 100% 牛奶 +5% CPS。",
         ["upgrade.global_kitten_workers.name"] = "貓咪勞工",
-        ["upgrade.global_kitten_workers.desc"] = "全域 CPS 乘以 1.25。",
+        ["upgrade.global_kitten_workers.desc"] = "牛奶越多，CPS 越高。每 100% 牛奶 +10% CPS。",
         ["upgrade.global_kitten_engineers.name"] = "貓咪工程師",
-        ["upgrade.global_kitten_engineers.desc"] = "全域 CPS 乘以 1.5。",
+        ["upgrade.global_kitten_engineers.desc"] = "牛奶越多，CPS 越高。每 100% 牛奶 +15% CPS。",
         ["upgrade.global_kitten_professors.name"] = "貓咪教授",
-        ["upgrade.global_kitten_professors.desc"] = "全域 CPS 乘以 1.75。",
+        ["upgrade.global_kitten_professors.desc"] = "牛奶越多，CPS 越高。每 100% 牛奶 +20% CPS。",
 
         // ---- Upgrade tier templates -----------------------------------------
         ["upgrade.tier.improved.name"] = "改良版{0}",

@@ -80,6 +80,11 @@
                 up.TargetBuilding is { } b ? Buildings.Get(b).DisplayName(Loc) : Loc["ui.effect.building_fallback"]),
         UpgradeEffectKind.ClickMultiplier => Loc.Format("ui.effect.click_multiplier", up.EffectValue.ToString("0.##")),
         UpgradeEffectKind.GlobalCpsMultiplier => Loc.Format("ui.effect.global_multiplier", up.EffectValue.ToString("0.##")),
+        // Kitten effect is milk-dependent: show the live effective factor
+        // (recomputed each render via the tooltip builder) plus the per-milk rate.
+        UpgradeEffectKind.KittenMilkMultiplier => Loc.Format("ui.effect.kitten",
+            (1 + State.MilkFactor() * up.EffectValue).ToString("0.##"),
+            (up.EffectValue * 100).ToString("0.##")),
         UpgradeEffectKind.CursorPerNonCursorBuilding =>
             Loc.Format("ui.effect.cursor_synergy", NumberFormat.Format(up.EffectValue)),
         _ => up.DisplayDescription(Loc),

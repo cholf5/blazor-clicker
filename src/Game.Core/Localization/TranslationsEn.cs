@@ -70,12 +70,20 @@ public static class TranslationsEn
         ["ui.effect.building_multiplier"] = "×{0} {1} output",
         ["ui.effect.click_multiplier"] = "×{0} click power",
         ["ui.effect.global_multiplier"] = "×{0} all production",
+        ["ui.effect.kitten"] = "×{0} all production (+{1}% per 100% milk)",
         ["ui.effect.cursor_synergy"] = "+{0} cursor cps per non-cursor building",
         ["ui.effect.building_fallback"] = "building",
         ["ui.upgrade_category.building"] = "Building",
         ["ui.upgrade_category.cursor"] = "Cursor",
         ["ui.upgrade_category.clicking"] = "Clicking",
         ["ui.upgrade_category.kitten"] = "Kitten",
+
+        // ---- Milk (decorative pool + tooltip) -------------------------------
+        ["ui.milk.title"] = "Milk",
+        ["ui.milk.level"] = "Milk level",
+        ["ui.milk.effect"] = "Boost to production",
+        ["ui.milk.flavor"] = "Milk rises as you unlock achievements. On its own it does nothing — your kitten upgrades are what convert it into extra production.",
+        ["ui.milk.flavor_none"] = "Milk rises as you unlock achievements. By itself it produces nothing: the boost stays ×1 until you buy a kitten upgrade, which turns your milk into extra cookies. Look for one in the Upgrades panel.",
 
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "Achievements",

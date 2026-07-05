@@ -24,6 +24,7 @@
     <section class="game-left">
         <StatsPanel State="Save.State" />
         <div class="cookie-area">
+            <MilkLayer State="Save.State" />
             <BigCookie OnClick="OnClickCookie" />
             @foreach (var f in _floaters)
             {

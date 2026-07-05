@@ -161,16 +161,19 @@ public static class Upgrades
             IsUnlocked: state => state.PurchasedUpgrades.Contains("cursor_million_fingers")
                                  && state.BuildingCounts.TryGetValue(BuildingId.Cursor, out var c) && c >= 100));
 
-        // ---- Global CPS boosts ----
+        // ---- Kitten upgrades: convert milk (achievement count) into CPS ----
+        // Unlike the fixed global multipliers above, these scale with milk, so
+        // they keep getting stronger as achievements accrue — the axis that keeps
+        // late-game growth alive once flat multipliers run out.
         list.Add(new UpgradeDefinition(
             Id: "global_kitten_helpers",
             Name: "Feline apprentices",
             Icon: "🐱",
-            Description: "Global CPS is multiplied by 1.10.",
+            Description: "Your milk (which grows as you unlock achievements) now boosts all production: +5% CPS per 100% milk.",
             Cost: 9_000_000,
             Category: UpgradeCategory.Kitten,
-            EffectKind: UpgradeEffectKind.GlobalCpsMultiplier,
-            EffectValue: 1.1,
+            EffectKind: UpgradeEffectKind.KittenMilkMultiplier,
+            EffectValue: 0.05,
             TargetBuilding: null,
             IsUnlocked: state => state.TotalCookiesBaked >= 1_000_000));
 
@@ -178,11 +181,11 @@ public static class Upgrades
             Id: "global_kitten_workers",
             Name: "Feline workforce",
             Icon: "🐈",
-            Description: "Global CPS is multiplied by 1.25.",
+            Description: "You gain more CPS the more milk you have. +10% CPS per 100% milk.",
             Cost: 9_000_000_000,
             Category: UpgradeCategory.Kitten,
-            EffectKind: UpgradeEffectKind.GlobalCpsMultiplier,
-            EffectValue: 1.25,
+            EffectKind: UpgradeEffectKind.KittenMilkMultiplier,
+            EffectValue: 0.10,
             TargetBuilding: null,
             IsUnlocked: state => state.PurchasedUpgrades.Contains("global_kitten_helpers")
                                  && state.TotalCookiesBaked >= 100_000_000));
@@ -191,11 +194,11 @@ public static class Upgrades
             Id: "global_kitten_engineers",
             Name: "Feline engineers",
             Icon: "🐈‍⬛",
-            Description: "Global CPS is multiplied by 1.5.",
+            Description: "You gain more CPS the more milk you have. +15% CPS per 100% milk.",
             Cost: 90_000_000_000_000d,
             Category: UpgradeCategory.Kitten,
-            EffectKind: UpgradeEffectKind.GlobalCpsMultiplier,
-            EffectValue: 1.5,
+            EffectKind: UpgradeEffectKind.KittenMilkMultiplier,
+            EffectValue: 0.15,
             TargetBuilding: null,
             IsUnlocked: state => state.PurchasedUpgrades.Contains("global_kitten_workers")
                                  && state.TotalCookiesBaked >= 10_000_000_000));
@@ -204,11 +207,11 @@ public static class Upgrades
             Id: "global_kitten_professors",
             Name: "Feline professors",
             Icon: "🎓",
-            Description: "Global CPS is multiplied by 1.75.",
+            Description: "You gain more CPS the more milk you have. +20% CPS per 100% milk.",
             Cost: 900_000_000_000_000_000d,
             Category: UpgradeCategory.Kitten,
-            EffectKind: UpgradeEffectKind.GlobalCpsMultiplier,
-            EffectValue: 1.75,
+            EffectKind: UpgradeEffectKind.KittenMilkMultiplier,
+            EffectValue: 0.20,
             TargetBuilding: null,
             IsUnlocked: state => state.PurchasedUpgrades.Contains("global_kitten_engineers")
                                  && state.TotalCookiesBaked >= 1_000_000_000_000d));

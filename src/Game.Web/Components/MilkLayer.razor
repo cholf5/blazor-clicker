@@ -1,0 +1,63 @@
+@* Decorative milk that rises at the bottom of the cookie area, echoing the
+   original game's milk pool. Purely visual: the economic effect of milk lives
+   in GameState.MilkFactor / the kitten upgrades. Height is recomputed on every
+   render (Home re-renders each tick) so the level tracks milk live. The surface
+   is three sine-wave layers scrolling at different speeds/directions and bobbing
+   vertically, which reads as flowing liquid rather than a static block.
+
+   Hovering the milk shows a tooltip explaining what it is and its current,
+   aggregate effect on production — otherwise players have no way to learn the
+   pool is more than decoration. *@
+
+@inject TooltipService Tooltip
+@inject ILocalizer Loc
+
+<div class="milk" style="height: @HeightPct().ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
+     @ref="_milk"
+     @onmouseover="ShowTooltip"
+     @onmouseout="Tooltip.Hide"
+     aria-hidden="true">
+    <div class="milk-wave milk-wave-back"></div>
+    <div class="milk-wave milk-wave-mid"></div>
+    <div class="milk-wave milk-wave-front"></div>
+    <div class="milk-body"></div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private ElementReference _milk;
+
+    // Map milk (1.0 == 100%, i.e. 25 achievements at +4% each) to a fraction of
+    // the cookie area's height. Grows visibly through the early/mid game, then
+    // caps so a late-game milk flood never drowns the cookie itself.
+    private double HeightPct() => Math.Min(45, State.MilkFactor() * 6);
+
+    private void ShowTooltip() => Tooltip.Show(BuildTooltip, _milk);
+
+    // Built fresh on every render (per the TooltipService contract) so the level
+    // and boost stay live as achievements unlock.
+    private RenderFragment BuildTooltip()
+    {
+        var milkPct = State.MilkFactor() * 100;
+        var boost = State.MilkCpsMultiplier();
+        var hasKitten = boost > 1.0;
+
+        // Always show BOTH the level and the production boost — including the
+        // ×1.00 "does nothing yet" state before any kitten upgrade. Hiding the
+        // boost would hide the whole point: milk is inert until a kitten upgrade
+        // converts it. Seeing "20% milk → ×1.00 production" is exactly what makes
+        // a new player ask "how do I make this matter?" — which the flavor answers.
+        var rows = new List<(string, string)>
+        {
+            (Loc["ui.milk.level"], $"{milkPct:0.#}%"),
+            (Loc["ui.milk.effect"], $"×{boost:0.##}"),
+        };
+
+        return @<TooltipCard Icon="🥛"
+                             Title="@Loc["ui.milk.title"]"
+                             CssClass="milk"
+                             Rows="rows"
+                             Flavor="@(hasKitten ? Loc["ui.milk.flavor"] : Loc["ui.milk.flavor_none"])" />;
+    }
+}
