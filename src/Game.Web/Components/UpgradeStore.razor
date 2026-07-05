@@ -24,7 +24,7 @@
                         @ref="_tiles[up.Id]"
                         disabled="@(!affordable)"
                         @onclick="() => Buy(up.Id)"
-                        @onmouseover="() => Tooltip.Show(() => BuildTooltip(up), _tiles[up.Id])"
+                        @onmouseover="() => ShowTooltip(up)"
                         @onmouseout="Tooltip.Hide">
                     <span class="upgrade-icon">@up.Icon</span>
                     <span class="upgrade-cost">@NumberFormat.Format(up.Cost)</span>
@@ -54,6 +54,18 @@
         {
             Tooltip.Hide();
             await OnPurchased.InvokeAsync();
+        }
+    }
+
+    // Anchor the tooltip only if this tile's element ref has been captured.
+    // `_available` is rebuilt every parent tick (~30fps), so a mouseover can
+    // fire in the window before `@ref` has populated `_tiles` for this id —
+    // indexing the dictionary directly there throws KeyNotFoundException.
+    private void ShowTooltip(UpgradeDefinition up)
+    {
+        if (_tiles.TryGetValue(up.Id, out var anchor))
+        {
+            Tooltip.Show(() => BuildTooltip(up), anchor);
         }
     }
 
