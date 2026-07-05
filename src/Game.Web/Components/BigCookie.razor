@@ -8,7 +8,13 @@
         @onclick="HandleClick"
         aria-label="@Loc["ui.cookie.aria"]"
         title="@Loc["ui.cookie.title"]">
-    <span class="big-cookie-emoji">🍪</span>
+    @* Hand-drawn (AI-redrawn, no original art reused — see NOTICE.md) cookie
+       image. A 500×500 transparent PNG whose visible pixels are centred on the
+       canvas, so its geometric centre equals its visual centre — unlike the
+       emoji it replaced, which sat off-centre in its text box and threw the
+       decorative cursor ring's alignment off. draggable=false suppresses the
+       browser's ghost-drag image. *@
+    <img class="big-cookie-img" src="img/big-cookie.png" alt="@Loc["ui.cookie.aria"]" draggable="false" />
 </button>
 
 @code {

@@ -22,15 +22,21 @@
 
 .cursor-finger {
     position: absolute;
-    /* rotate to the finger's angle, then push out along the radius. The ring
-       container spins, carrying every finger around the cookie together. */
-    transform: rotate(var(--angle)) translateY(calc(-1 * var(--radius)));
+    /* Anchor the finger box on the ring centre, then rotate to its angle and
+       push out along the radius. Centring via left/top:50% + translate(-50%,-50%)
+       (NOT negative margins) is what keeps the rotation pivot exactly ON the
+       centre. The old margin trick double-centred against the spinner's
+       place-items:center — the pivot ended up off by half the finger's
+       (non-square) box, so a finger's true distance from the cookie centre
+       varied with its angle: fingers near the top read farther out, those near
+       the bottom got pulled under the cookie. */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--radius)));
     transform-origin: center;
     pointer-events: auto;
     width: 1.4rem;
     height: 2.3rem;
-    margin-top: -1.15rem;
-    margin-left: -0.7rem;
 }
 
 /* Inner wrapper does the "poke" toward the cookie — a short push inward and
@@ -93,14 +99,12 @@
     .cursor-finger-poke { animation: none; }
 }
 
-/* Mobile: the cookie shrinks (emoji 15rem → 10rem), so pull the rings inward to
+/* Mobile: the cookie shrinks (image 15rem → 10rem), so pull the rings inward to
    stay hugging the cookie. Scales the base radius and gap by ~0.66. */
 @media (max-width: 900px) {
     .cursor-finger {
-        transform: rotate(var(--angle)) translateY(calc(-0.66 * var(--radius)));
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-0.66 * var(--radius)));
         width: 1rem;
         height: 1.6rem;
-        margin-top: -0.8rem;
-        margin-left: -0.5rem;
     }
 }

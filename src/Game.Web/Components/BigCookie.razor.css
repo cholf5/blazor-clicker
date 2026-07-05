@@ -14,10 +14,13 @@
     z-index: 2;
 }
 
-.big-cookie-emoji {
-    font-size: 15rem;
-    display: inline-block;
-    line-height: 1;
+.big-cookie-img {
+    width: 15rem;
+    height: 15rem;
+    display: block;
+    /* Suppress the drag-to-save ghost image so the cookie feels like a button. */
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .big-cookie:hover { transform: scale(1.03); }
@@ -25,5 +28,5 @@
 .big-cookie.bounce { transform: scale(0.9); }
 
 @media (max-width: 900px) {
-    .big-cookie-emoji { font-size: 10rem; }
+    .big-cookie-img { width: 10rem; height: 10rem; }
 }

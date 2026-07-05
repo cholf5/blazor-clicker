@@ -32,9 +32,14 @@ public static class CursorRingLayout
     /// past it the ring stops growing entirely.</summary>
     public const int MaxTier = 6;
 
-    /// <summary>Innermost ring radius, in rem — sits just outside the cookie
-    /// (emoji radius ≈ 7.5rem) so fingers aren't occluded.</summary>
-    private const double BaseRadiusRem = 7.6;
+    /// <summary>Innermost ring radius, in rem — sits just outside the cookie.
+    /// The cookie image is a round cookie inscribed in its 500×500 frame, drawn
+    /// 15rem wide, so its edge reaches ≈7.5rem out at the four cardinal
+    /// directions (top/bottom/left/right — exactly where low finger counts land).
+    /// A finger box reaches ≈1.15rem inward from its anchor and the poke taps
+    /// ≈0.5rem further, so the anchor must sit ≈9rem out for the fingertip to
+    /// rest just past the cookie edge and only "tap" it on the poke.</summary>
+    private const double BaseRadiusRem = 8.5;
 
     /// <summary>Radial gap between successive rings, in rem.</summary>
     private const double RingGapRem = 1.0;
