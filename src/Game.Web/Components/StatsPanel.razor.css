@@ -8,6 +8,10 @@
     font-weight: 700;
     color: #f7dfa8;
     letter-spacing: -0.02em;
+    /* Tabular figures keep every digit the same width so the frame-by-frame
+       last-digit churn (1.231 → 1.238) can't jitter this centred number.
+       Pairs with NumberFormat.FormatStable, which fixes the character count. */
+    font-variant-numeric: tabular-nums;
 }
 
 .stats-bank-label {

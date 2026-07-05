@@ -47,6 +47,28 @@ public static class NumberFormat
         return scaled.ToString("0.###", CultureInfo.InvariantCulture) + Suffixes[tier];
     }
 
+    /// <summary>
+    /// Like <see cref="Format"/>, but keeps a fixed 3-decimal width on large
+    /// numbers (e.g. "1.230 million" instead of "1.23 million"). Used only for
+    /// the top-of-column cookie bank, where the value refreshes every frame and
+    /// a shrinking width in a centred box reads as horizontal jitter — the "0.###"
+    /// mask drops trailing zeros, so "1.230 million" would collapse to "1.23
+    /// million" and the number's width would flicker frame to frame.
+    /// </summary>
+    public static string FormatStable(double value)
+    {
+        if (!double.IsFinite(value)) return value.ToString(CultureInfo.InvariantCulture);
+        if (value < 0) return "-" + FormatStable(-value);
+        if (value < 1_000_000) return Math.Floor(value).ToString("N0", CultureInfo.InvariantCulture);
+
+        var tier = (int)Math.Floor(Math.Log10(value) / 3);
+        if (tier <= 0) return value.ToString("N0", CultureInfo.InvariantCulture);
+        if (tier >= Suffixes.Length) tier = Suffixes.Length - 1;
+
+        var scaled = value / Math.Pow(10, tier * 3);
+        return scaled.ToString("0.000", CultureInfo.InvariantCulture) + Suffixes[tier];
+    }
+
     /// <summary>Format a rate, like "12.3 million cookies per second".</summary>
     public static string FormatRate(double value) => Format(value);
 }
