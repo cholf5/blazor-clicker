@@ -58,4 +58,36 @@ public class GameStateTests
         s.Tick(-1);
         Assert.Equal(before, s.Cookies);
     }
+
+    [Fact]
+    public void BuildingCpsShare_SumsToOne()
+    {
+        var s = new GameState { Cookies = 1_000_000 };
+        s.BuyBuildingBulk(BuildingId.Cursor, 10);
+        s.BuyBuildingBulk(BuildingId.Grandma, 5);
+
+        var total = s.BuildingCpsShare(BuildingId.Cursor) + s.BuildingCpsShare(BuildingId.Grandma);
+        Assert.Equal(1.0, total, 6);
+    }
+
+    [Fact]
+    public void BuildingCpsShare_UnaffectedByFrenzyBuff()
+    {
+        var s = new GameState { Cookies = 1_000_000 };
+        s.BuyBuildingBulk(BuildingId.Cursor, 10);
+        s.BuyBuildingBulk(BuildingId.Grandma, 5);
+
+        var before = s.BuildingCpsShare(BuildingId.Grandma);
+
+        // A x7 Frenzy scales every building uniformly, so shares must not move.
+        s.Buffs.Add(new ActiveBuff(GoldenCookieEffect.Frenzy, 7.0, s.GameTime + 77));
+        Assert.Equal(before, s.BuildingCpsShare(BuildingId.Grandma), 6);
+    }
+
+    [Fact]
+    public void BuildingCpsShare_ZeroWhenNothingProduces()
+    {
+        var s = new GameState();
+        Assert.Equal(0, s.BuildingCpsShare(BuildingId.Grandma));
+    }
 }

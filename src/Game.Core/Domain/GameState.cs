@@ -370,6 +370,24 @@ public sealed class GameState
     public double GetBuildingTotalCps(BuildingId id) =>
         GetBuildingUnitCps(id) * BuildingCounts.GetValueOrDefault(id);
 
+    /// <summary>
+    /// Fraction (0..1) of total production this building is responsible for.
+    /// Compared against the <b>raw building sum</b> — not <see cref="CurrentCps"/> —
+    /// on purpose: global multipliers, prestige, sugar lumps and temporary Frenzy
+    /// buffs all scale every building uniformly, so they cancel in the ratio.
+    /// Dividing a single building's un-buffed CPS by the buff-inflated
+    /// <see cref="CurrentCps"/> would understate its share (e.g. by 7× during a
+    /// x7 Frenzy). Returns 0 when nothing is producing.
+    /// </summary>
+    public double BuildingCpsShare(BuildingId id)
+    {
+        double buildingSum = 0;
+        foreach (var b in Buildings.All)
+            buildingSum += GetBuildingTotalCps(b.Id);
+
+        return buildingSum > 0 ? GetBuildingTotalCps(id) / buildingSum : 0;
+    }
+
     /// <summary>CPS a single copy of this building contributes, incl. tier upgrades + cursor synergy.</summary>
     public double GetBuildingUnitCps(BuildingId id)
     {

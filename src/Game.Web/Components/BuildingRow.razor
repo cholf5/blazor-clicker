@@ -83,7 +83,6 @@ else
         var unitCost = State.NextBuildingCost(Definition.Id);
         var unitCps = State.GetBuildingUnitCps(Definition.Id);
         var totalCps = unitCps * owned;
-        var globalCps = State.CurrentCps();
 
         var rows = new List<(string, string)>
         {
@@ -94,9 +93,10 @@ else
         if (owned > 0)
         {
             rows.Add((Loc["ui.building.total_from"], Loc.Format("ui.unit.cps", NumberFormat.Format(totalCps))));
-            if (globalCps > 0)
+            var share = State.BuildingCpsShare(Definition.Id);
+            if (share > 0)
             {
-                rows.Add((Loc["ui.building.share"], $"{totalCps / globalCps * 100:0.#}%"));
+                rows.Add((Loc["ui.building.share"], $"{share * 100:0.#}%"));
             }
         }
 
