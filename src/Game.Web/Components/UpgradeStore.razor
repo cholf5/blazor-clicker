@@ -24,7 +24,7 @@
                         @ref="_tiles[up.Id]"
                         disabled="@(!affordable)"
                         @onclick="() => Buy(up.Id)"
-                        @onmouseover="() => Tooltip.Show(BuildTooltip(up), _tiles[up.Id])"
+                        @onmouseover="() => Tooltip.Show(() => BuildTooltip(up), _tiles[up.Id])"
                         @onmouseout="Tooltip.Hide">
                     <span class="upgrade-icon">@up.Icon</span>
                     <span class="upgrade-cost">@NumberFormat.Format(up.Cost)</span>

@@ -67,9 +67,9 @@ else
 
     private ElementReference _row;
 
-    private void ShowTooltip() => Tooltip.Show(BuildTooltip(), _row);
+    private void ShowTooltip() => Tooltip.Show(BuildTooltip, _row);
 
-    private void ShowLockedTooltip() => Tooltip.Show(BuildLockedTooltip(), _row);
+    private void ShowLockedTooltip() => Tooltip.Show(BuildLockedTooltip, _row);
 
     private RenderFragment BuildLockedTooltip() =>
         @<TooltipCard Icon="🔒"

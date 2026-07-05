@@ -5,35 +5,60 @@
 
 @implements IDisposable
 @inject TooltipService Ts
+@inject GameLoop Loop
 @inject IJSRuntime Js
 
-@if (Ts.Visible && Ts.Content is not null)
+@if (Ts.Visible && Ts.Content is { } content)
 {
     <div class="tooltip-layer" @ref="_el">
-        @Ts.Content
+        @content
     </div>
 }
 
 @code {
     private ElementReference _el;
 
+    // Set when the tooltip is shown/hidden (anchor may have changed); cleared
+    // once we've repositioned. Tick-driven content refreshes leave it false so
+    // we don't hammer the JS positioning helper 30×/second for a card that
+    // isn't moving.
+    private bool _needsReposition;
+
     protected override void OnInitialized()
     {
         Ts.OnChange += HandleChange;
+        // Re-render while visible so the tooltip's builder re-derives live
+        // values (owned count, CPS share, cost) as the game state advances —
+        // otherwise it freezes at whatever it was when the cursor arrived.
+        Loop.OnTick += HandleTick;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Anchor the card beside the hovered element after each render that
-        // shows one. It then stays put while the cursor moves over the anchor.
-        if (Ts.Visible && Ts.Content is not null)
+        // Anchor the card beside the hovered element only when it was (re)shown.
+        // It then stays put while the cursor hovers and content refreshes.
+        if (_needsReposition && Ts.Visible)
         {
+            _needsReposition = false;
             try { await Js.InvokeVoidAsync("cookieClicker.positionTooltip", _el, Ts.Anchor); }
             catch { /* ignore transient interop errors */ }
         }
     }
 
-    private void HandleChange() => InvokeAsync(StateHasChanged);
+    private void HandleChange()
+    {
+        _needsReposition = true;
+        InvokeAsync(StateHasChanged);
+    }
 
-    public void Dispose() => Ts.OnChange -= HandleChange;
+    private void HandleTick()
+    {
+        if (Ts.Visible) InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Ts.OnChange -= HandleChange;
+        Loop.OnTick -= HandleTick;
+    }
 }

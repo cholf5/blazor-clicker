@@ -36,7 +36,7 @@
             var unlocked = State.UnlockedAchievements.Contains(ach.Id);
             <div class="achievement-tile @(unlocked ? "unlocked" : "locked")"
                  @ref="_tiles[ach.Id]"
-                 @onmouseover="() => Tooltip.Show(BuildTooltip(ach, unlocked), _tiles[ach.Id])"
+                 @onmouseover="() => Tooltip.Show(() => BuildTooltip(ach, unlocked), _tiles[ach.Id])"
                  @onmouseout="Tooltip.Hide">
                 <span class="achievement-icon">@(unlocked ? ach.Icon : "🔒")</span>
             </div>

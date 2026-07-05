@@ -14,8 +14,16 @@ namespace Game.Web.Services;
 /// </summary>
 public sealed class TooltipService
 {
+    /// <summary>
+    /// Builds the fragment on demand. Stored as a factory (not a baked
+    /// <see cref="RenderFragment"/>) so the content re-derives live values —
+    /// owned counts, CPS share, cost — every time the host re-renders, instead
+    /// of freezing whatever they were at mouseover time.
+    /// </summary>
+    private Func<RenderFragment>? _builder;
+
     /// <summary>The fragment to render, or null when nothing is shown.</summary>
-    public RenderFragment? Content { get; private set; }
+    public RenderFragment? Content => Visible ? _builder?.Invoke() : null;
 
     /// <summary>
     /// The element the tooltip is anchored to. The host reads its bounding
@@ -31,9 +39,13 @@ public sealed class TooltipService
     public event Action? OnChange;
 
     /// <summary>Show the given content anchored to <paramref name="anchor"/>.</summary>
-    public void Show(RenderFragment content, ElementReference anchor)
+    /// <param name="content">
+    /// A factory invoked on every render so the tooltip reflects current state.
+    /// Callers pass a lambda that recomputes its values, not a pre-built fragment.
+    /// </param>
+    public void Show(Func<RenderFragment> content, ElementReference anchor)
     {
-        Content = content;
+        _builder = content;
         Anchor = anchor;
         Visible = true;
         OnChange?.Invoke();
