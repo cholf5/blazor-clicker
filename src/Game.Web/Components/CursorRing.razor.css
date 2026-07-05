@@ -1,17 +1,24 @@
-/* The ring is centred on the cookie area and rotates as a whole; individual
-   fingers are placed with a rotate+translate transform driven by per-finger CSS
-   variables. Behind the cookie (z-index:1) and pointer-events:none so clicks
-   always reach the cookie itself. */
+/* Stationary outer container — sits behind the cookie (z-index:1) and
+   receives hover events for the tooltip. Stays still so the tooltip anchor
+   never moves, eliminating "chasing" jitter as the fingers rotate. The actual
+   spin lives on the inner wrapper. */
 .cursor-ring {
     position: absolute;
     inset: 0;
     z-index: 1;
-    /* Only the container receives hover (for the tooltip); the fingers below
-       stay transparent to pointer events. cursor:help hints it's informative. */
-    pointer-events: none;
     cursor: help;
+    /* Keep the spinner centred on the cookie regardless of container aspect. */
+    display: grid;
+    place-items: center;
+}
+
+/* Inner wrapper actually spins; fingers live inside this. Pointer events are
+   transparent here so only the outer stationary container captures hover. */
+.cursor-ring-spinner {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     animation: cursor-ring-spin 60s linear infinite;
-    /* Keep the spin centred on the cookie regardless of container aspect. */
     display: grid;
     place-items: center;
 }
