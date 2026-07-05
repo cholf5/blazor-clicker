@@ -2,10 +2,11 @@
    Locked ones show as silhouettes. *@
 
 @inject TooltipService Tooltip
+@inject ILocalizer Loc
 
 <section class="achievements">
     <header class="achievements-header">
-        <h2>Achievements</h2>
+        <h2>@Loc["ui.achievements.title"]</h2>
         <span class="achievements-count">@State.UnlockedAchievements.Count / @Achievements.All.Count</span>
     </header>
 
@@ -21,7 +22,7 @@
             var total = CountIn(c);
             var unlocked = CountUnlockedIn(c);
             <button class="achievement-tab @(_selected?.Key == c.Key ? "active" : "") @(unlocked == total ? "complete" : "")"
-                    title="@c.Label"
+                    title="@c.DisplayLabel(Loc)"
                     @onclick="() => Select(c)">
                 <span class="tab-icon">@c.Icon</span>
                 <span class="tab-count">@unlocked/@total</span>
@@ -69,11 +70,11 @@
     {
         if (!unlocked)
         {
-            return @<TooltipCard Icon="🔒" Title="???" CssClass="locked"
-                                 Flavor="This achievement is still locked." />;
+            return @<TooltipCard Icon="🔒" Title="@Loc["ui.achievements.locked_title"]" CssClass="locked"
+                                 Flavor="@Loc["ui.achievements.locked_flavor"]" />;
         }
 
-        return @<TooltipCard Icon="@ach.Icon" Title="@ach.Name" Tag="Unlocked"
-                             CssClass="achievement" Flavor="@ach.Description" />;
+        return @<TooltipCard Icon="@ach.Icon" Title="@ach.DisplayName(Loc)" Tag="@Loc["ui.achievements.unlocked_tag"]"
+                             CssClass="achievement" Flavor="@ach.DisplayDescription(Loc)" />;
     }
 }

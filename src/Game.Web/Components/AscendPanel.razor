@@ -2,15 +2,16 @@
    of gaining a level. Shows preview of gain and confirmation dialog. *@
 
 @inject AudioService Audio
+@inject ILocalizer Loc
 
 @if (Visible)
 {
     <section class="ascend-panel">
         <header class="ascend-header">
-            <h3>Ascension</h3>
+            <h3>@Loc["ui.ascend.title"]</h3>
             @if (State.PrestigeLevel > 0)
             {
-                <span class="ascend-current" title="Permanent CPS bonus from prior ascensions">
+                <span class="ascend-current" title="@Loc["ui.ascend.current_title"]">
                     ✨ @State.PrestigeLevel · +@(_prestigePercent.ToString("0.#"))%
                 </span>
             }
@@ -19,15 +20,11 @@
         @if (_confirming)
         {
             <div class="ascend-confirm">
-                <p>
-                    Ascending will <strong>wipe the current run</strong> — cookies,
-                    buildings, and upgrades reset. Achievements, sugar lumps and
-                    prestige stay with you.
-                </p>
-                <p>You will gain <strong>+@_available prestige level@(_available == 1 ? "" : "s")</strong>.</p>
+                <p>@Loc["ui.ascend.confirm_body"]</p>
+                <p>@Loc.Format(_available == 1 ? "ui.ascend.confirm_gain_one" : "ui.ascend.confirm_gain", _available)</p>
                 <div class="ascend-actions">
-                    <button class="ascend-btn danger" @onclick="ConfirmAscend">Ascend</button>
-                    <button class="ascend-btn" @onclick="() => _confirming = false">Cancel</button>
+                    <button class="ascend-btn danger" @onclick="ConfirmAscend">@Loc["ui.ascend.button"]</button>
+                    <button class="ascend-btn" @onclick="() => _confirming = false">@Loc["ui.ascend.cancel"]</button>
                 </div>
             </div>
         }
@@ -36,18 +33,17 @@
             @if (_available > 0)
             {
                 <p class="ascend-blurb">
-                    Ascend now to gain <strong>+@_available</strong>
-                    prestige level@(_available == 1 ? "" : "s") — each level grants a
-                    permanent +@((ProgressionConfig.PrestigeCpsBonus * 100).ToString("0.#"))% CPS boost.
+                    @Loc.Format(_available == 1 ? "ui.ascend.blurb_one" : "ui.ascend.blurb",
+                        _available, (ProgressionConfig.PrestigeCpsBonus * 100).ToString("0.#"))
                 </p>
-                <button class="ascend-btn" @onclick="() => _confirming = true">🌈 Ascend</button>
+                <button class="ascend-btn" @onclick="() => _confirming = true">🌈 @Loc["ui.ascend.button"]</button>
             }
             else
             {
                 <p class="ascend-blurb">
-                    Reach <strong>@NumberFormat.Format(ProgressionConfig.MinCookiesToAscend)</strong>
-                    cookies baked this run to unlock your first ascension.
-                    Currently: @NumberFormat.Format(State.TotalCookiesBaked).
+                    @Loc.Format("ui.ascend.locked",
+                        NumberFormat.Format(ProgressionConfig.MinCookiesToAscend),
+                        NumberFormat.Format(State.TotalCookiesBaked))
                 </p>
             }
         }

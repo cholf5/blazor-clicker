@@ -55,9 +55,20 @@ public sealed class GameState
     /// <summary>Number of heavenly / prestige levels this save has accumulated across every ascension.</summary>
     public int PrestigeLevel { get; private set; }
 
+    // ---- Display preferences (persisted, but not part of the simulation) ----
+    /// <summary>
+    /// The language the player explicitly chose, or null to follow the system /
+    /// browser language. Persisted so the choice survives reloads; the web layer
+    /// reads it on startup and only auto-detects when it is null.
+    /// </summary>
+    public Localization.Language? ChosenLanguage { get; set; }
+
     // ---- Notifications (drained by the UI each frame) ----
+    // Achievement notifications carry the achievement id; news messages carry a
+    // translation key + args (see NewsMessage) so the UI localizes them at
+    // display time and GameState stays free of any localizer dependency.
     private readonly Queue<string> _achievementNotifications = new();
-    private readonly Queue<string> _newsMessages = new();
+    private readonly Queue<NewsMessage> _newsMessages = new();
 
     public GameState() : this(new Random()) { }
 
@@ -164,7 +175,7 @@ public sealed class GameState
             && GameTime >= SugarLumpNextAt)
         {
             SugarLumpReady = true;
-            _newsMessages.Enqueue("A sugar lump is ripe — go harvest it!");
+            _newsMessages.Enqueue(NewsMessage.Of("news.event.sugar_ripe"));
         }
 
         // 6. Check achievements
@@ -235,15 +246,15 @@ public sealed class GameState
                 if (luckyGain < 13) luckyGain = 13; // sanity floor
                 Cookies += luckyGain;
                 AddBaked(luckyGain);
-                _newsMessages.Enqueue($"Lucky! +{luckyGain:N0} cookies.");
+                _newsMessages.Enqueue(NewsMessage.Of("news.event.lucky", NumberFormat.Format(luckyGain)));
                 break;
             case GoldenCookieEffect.Frenzy:
                 Buffs.Add(new ActiveBuff(GoldenCookieEffect.Frenzy, 7.0, GameTime + 77));
-                _newsMessages.Enqueue("Frenzy! CPS ×7 for 77 seconds.");
+                _newsMessages.Enqueue(NewsMessage.Of("news.event.frenzy"));
                 break;
             case GoldenCookieEffect.ClickFrenzy:
                 Buffs.Add(new ActiveBuff(GoldenCookieEffect.ClickFrenzy, 777.0, GameTime + 13));
-                _newsMessages.Enqueue("Click frenzy! Click power ×777 for 13 seconds.");
+                _newsMessages.Enqueue(NewsMessage.Of("news.event.click_frenzy"));
                 break;
         }
 
@@ -257,7 +268,7 @@ public sealed class GameState
         SugarLumpReady = false;
         SugarLumps++;
         SugarLumpNextAt = GameTime + ProgressionConfig.SugarLumpRipenSeconds;
-        _newsMessages.Enqueue($"Harvested a sugar lump! You now have {SugarLumps}.");
+        _newsMessages.Enqueue(NewsMessage.Of("news.event.harvest", SugarLumps));
         return true;
     }
 
@@ -293,7 +304,8 @@ public sealed class GameState
         ActiveGolden = null;
         ScheduleNextGolden();
 
-        _newsMessages.Enqueue($"Ascended! Gained {gained} prestige level{(gained == 1 ? "" : "s")}. New total: {PrestigeLevel}.");
+        var ascendKey = gained == 1 ? "news.event.ascend_one" : "news.event.ascend_many";
+        _newsMessages.Enqueue(NewsMessage.Of(ascendKey, gained, PrestigeLevel));
         return true;
     }
 
@@ -306,10 +318,10 @@ public sealed class GameState
         return result;
     }
 
-    /// <summary>Drain queued news-ticker flavor messages for display.</summary>
-    public IReadOnlyList<string> DrainNewsMessages()
+    /// <summary>Drain queued news-ticker flavor messages (translation key + args) for display.</summary>
+    public IReadOnlyList<NewsMessage> DrainNewsMessages()
     {
-        if (_newsMessages.Count == 0) return Array.Empty<string>();
+        if (_newsMessages.Count == 0) return Array.Empty<NewsMessage>();
         var result = _newsMessages.ToArray();
         _newsMessages.Clear();
         return result;
@@ -501,7 +513,7 @@ public sealed class GameState
             ScreenX: 0.1 + _random.NextDouble() * 0.8,
             ScreenY: 0.15 + _random.NextDouble() * 0.7);
 
-        _newsMessages.Enqueue("A golden cookie is glinting somewhere on screen…");
+        _newsMessages.Enqueue(NewsMessage.Of("news.event.golden_spawn"));
     }
 
     private void ScheduleNextGolden()
@@ -529,7 +541,9 @@ public sealed class GameState
             {
                 UnlockedAchievements.Add(ach.Id);
                 _achievementNotifications.Enqueue(ach.Id);
-                _newsMessages.Enqueue($"Achievement unlocked: {ach.Name}!");
+                // The news line references the achievement by id; the UI resolves
+                // its localized name when it drains and renders the message.
+                _newsMessages.Enqueue(NewsMessage.Of("news.event.achievement", ach.Id));
             }
         }
     }
@@ -561,6 +575,7 @@ public sealed class GameState
             ? data.SugarLumpNextAt
             : GameTime + ProgressionConfig.SugarLumpRipenSeconds;
         PrestigeLevel = data.PrestigeLevel;
+        ChosenLanguage = data.Language;
     }
 
     internal SaveData ToSaveData() => new()
@@ -584,5 +599,6 @@ public sealed class GameState
         SugarLumpReady = SugarLumpReady,
         SugarLumpNextAt = SugarLumpNextAt,
         PrestigeLevel = PrestigeLevel,
+        Language = ChosenLanguage,
     };
 }

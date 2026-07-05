@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Game.Core.Localization;
 using Game.Web;
 using Game.Web.Services;
 
@@ -13,7 +14,9 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 // GameLoop reads from it every tick so state replacement (import / wipe)
 // takes effect immediately.
 builder.Services.AddSingleton<LocalStorageService>();
+builder.Services.AddSingleton<ILocalizer>(_ => new Localizer());
 builder.Services.AddSingleton<SaveCoordinator>();
+builder.Services.AddSingleton<LanguageService>();
 builder.Services.AddSingleton<GameLoop>();
 builder.Services.AddSingleton<AudioService>();
 builder.Services.AddScoped<TooltipService>();

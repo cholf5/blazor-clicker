@@ -2,11 +2,12 @@
    the flip back through the service so preference persists across reloads. *@
 
 @inject AudioService Audio
+@inject ILocalizer Loc
 @implements IDisposable
 
 <button class="mute-btn @(Audio.IsMuted ? "muted" : "")"
         @onclick="Toggle"
-        title="@(Audio.IsMuted ? "Sound is muted — click to unmute" : "Sound is on — click to mute")">
+        title="@(Audio.IsMuted ? Loc["ui.mute.muted"] : Loc["ui.mute.on"])">
     @(Audio.IsMuted ? "🔇" : "🔊")
 </button>
 

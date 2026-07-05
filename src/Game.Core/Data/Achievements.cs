@@ -1,4 +1,5 @@
 using Game.Core.Domain;
+using Game.Core.Localization;
 
 namespace Game.Core.Data;
 
@@ -13,6 +14,15 @@ namespace Game.Core.Data;
 /// * "Own N of a building" milestones
 /// * Miscellaneous — click counts, upgrades purchased, golden cookies
 /// * Meta — sugar lumps harvested, ascensions performed
+///
+/// Localization: <see cref="AchievementDefinition.Name"/>/<c>Description</c>
+/// hold the English source. Fixed-name families rely on id-derived overlay keys
+/// (<c>achievement.&lt;id&gt;.name</c>); the two magnitude-generated families
+/// (baked / cps ramps) attach <c>NameOverlay</c> closures that compose the
+/// Chinese from a shared template plus an English magnitude phrase (magnitude
+/// words stay English by design — see the i18n design doc). Descriptions carry
+/// numbers, so every family attaches a <c>DescOverlay</c> that fills a Chinese
+/// template with a <see cref="NumberFormat"/>-formatted value (English units).
 /// </summary>
 public static class Achievements
 {
@@ -46,6 +56,9 @@ public static class Achievements
 
     public static AchievementDefinition Get(string id) => ById[id];
 
+    /// <summary>Look up an achievement by id without throwing on an unknown id.</summary>
+    public static bool TryGet(string id, out AchievementDefinition? def) => ById.TryGetValue(id, out def);
+
     private static IReadOnlyList<AchievementDefinition> BuildAll()
     {
         var list = new List<AchievementDefinition>();
@@ -74,15 +87,22 @@ public static class Achievements
         foreach (var threshold in bakeThresholds)
         {
             var t = threshold; // capture
-            var name = bakeIntroNames.TryGetValue(threshold, out var intro)
-                ? intro
-                : BakerName(threshold);
+            var isIntro = bakeIntroNames.TryGetValue(threshold, out var intro);
+            var name = isIntro ? intro! : BakerName(threshold);
+            var phrase = MagnitudePhrase(threshold);
+            var formatted = NumberFormat.Format(threshold);
             list.Add(new AchievementDefinition(
                 Id: $"baked_{threshold:0}",
                 Name: name,
                 Icon: "🍪",
-                Description: $"Bake {NumberFormat.Format(threshold)} cookie{(threshold == 1 ? "" : "s")} in total.",
-                IsUnlocked: s => s.TotalCookiesBaked >= t));
+                Description: $"Bake {formatted} cookie{(threshold == 1 ? "" : "s")} in total.",
+                IsUnlocked: s => s.TotalCookiesBaked >= t)
+            {
+                // Intro tiers have bespoke names (id-derived overlay); the ramp
+                // composes "<magnitude> baker" from an English magnitude phrase.
+                NameOverlay = isIntro ? null : loc => loc.OverlayFormat("achievement.baker.name", phrase),
+                DescOverlay = loc => loc.OverlayFormat("achievement.baked.desc", formatted),
+            });
         }
 
         // ---- Own N of each building ----
@@ -95,12 +115,17 @@ public static class Achievements
             {
                 var bid = building.Id;
                 var c = count;
+                var lowerName = building.Name.ToLowerInvariant();
                 list.Add(new AchievementDefinition(
                     Id: $"own_{building.Id}_{count}",
-                    Name: $"{count}× {building.Name.ToLowerInvariant()}",
+                    Name: $"{count}× {lowerName}",
                     Icon: building.Icon,
-                    Description: $"Own {count} {building.Name.ToLowerInvariant()}{(count == 1 ? "" : "s")}.",
-                    IsUnlocked: s => s.BuildingCounts.TryGetValue(bid, out var owned) && owned >= c));
+                    Description: $"Own {count} {lowerName}{(count == 1 ? "" : "s")}.",
+                    IsUnlocked: s => s.BuildingCounts.TryGetValue(bid, out var owned) && owned >= c)
+                {
+                    NameOverlay = loc => loc.OverlayFormat("achievement.own.name", c, Buildings.Get(bid).DisplayName(loc)),
+                    DescOverlay = loc => loc.OverlayFormat("achievement.own.desc", c, Buildings.Get(bid).DisplayName(loc)),
+                });
             }
         }
 
@@ -118,12 +143,16 @@ public static class Achievements
         foreach (var (threshold, name) in clickMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"clicks_{threshold}",
                 Name: name,
                 Icon: "👆",
-                Description: $"Manually click the big cookie {threshold:N0} times.",
-                IsUnlocked: s => s.HandmadeClicks >= t));
+                Description: $"Manually click the big cookie {formatted} times.",
+                IsUnlocked: s => s.HandmadeClicks >= t)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.clicks.desc", formatted),
+            });
         }
 
         // ---- Cookies-per-second milestones ----
@@ -137,12 +166,21 @@ public static class Achievements
         foreach (var threshold in cpsThresholds)
         {
             var t = threshold;
+            var isSmall = Math.Round(Math.Log10(threshold)) < 6;
+            var phrase = MagnitudePhrase(threshold);
+            var formatted = NumberFormat.Format(threshold);
             list.Add(new AchievementDefinition(
                 Id: $"cps_{threshold:0}",
                 Name: PerSecondName(threshold),
                 Icon: "⏱️",
-                Description: $"Reach {NumberFormat.Format(threshold)} cookie{(threshold == 1 ? "" : "s")} per second.",
-                IsUnlocked: s => s.CurrentCps() >= t));
+                Description: $"Reach {formatted} cookie{(threshold == 1 ? "" : "s")} per second.",
+                IsUnlocked: s => s.CurrentCps() >= t)
+            {
+                // Small tiers (<1e6) have bespoke names (id-derived overlay); the
+                // ramp composes "<magnitude> per second" from the magnitude phrase.
+                NameOverlay = isSmall ? null : loc => loc.OverlayFormat("achievement.persecond.name", phrase),
+                DescOverlay = loc => loc.OverlayFormat("achievement.cps.desc", formatted),
+            });
         }
 
         // ---- Miscellaneous ----
@@ -173,12 +211,16 @@ public static class Achievements
         foreach (var (threshold, name) in goldenMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"golden_{threshold}",
                 Name: name,
                 Icon: "🪙",
-                Description: $"Click {threshold:N0} golden cookies.",
-                IsUnlocked: s => s.GoldenCookiesClicked >= t));
+                Description: $"Click {formatted} golden cookies.",
+                IsUnlocked: s => s.GoldenCookiesClicked >= t)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.golden.desc", formatted),
+            });
         }
 
         // ---- Frenzy combo achievements (click a golden cookie during a frenzy) ----
@@ -192,14 +234,20 @@ public static class Achievements
         foreach (var (threshold, name) in comboMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"combo_{threshold}",
                 Name: name,
                 Icon: "⚡",
                 Description: threshold == 1
                     ? "Click a golden cookie while a frenzy is active."
-                    : $"Click {threshold:N0} golden cookies while a frenzy is active.",
-                IsUnlocked: s => s.GoldenClicksDuringFrenzy >= t));
+                    : $"Click {formatted} golden cookies while a frenzy is active.",
+                IsUnlocked: s => s.GoldenClicksDuringFrenzy >= t)
+            {
+                DescOverlay = threshold == 1
+                    ? loc => loc.Overlay("achievement.combo.desc_one")
+                    : loc => loc.OverlayFormat("achievement.combo.desc", formatted),
+            });
         }
 
         // ---- Handmade cookie achievements (cookies from manual clicks only) ----
@@ -208,12 +256,16 @@ public static class Achievements
         foreach (var threshold in handmadeThresholds)
         {
             var t = threshold;
+            var formatted = NumberFormat.Format(threshold);
             list.Add(new AchievementDefinition(
                 Id: $"handmade_{threshold:0}",
                 Name: HandmadeName(threshold),
                 Icon: "🤲",
-                Description: $"Make {NumberFormat.Format(threshold)} cookies from manual clicks.",
-                IsUnlocked: s => s.HandmadeCookies >= t));
+                Description: $"Make {formatted} cookies from manual clicks.",
+                IsUnlocked: s => s.HandmadeCookies >= t)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.handmade.desc", formatted),
+            });
         }
 
         // ---- Play-time achievements (uses the existing GameTime clock) ----
@@ -228,12 +280,16 @@ public static class Achievements
         {
             var sec = seconds;
             var hours = (int)(seconds / 3_600);
+            var formatted = hours.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"playtime_{(int)seconds}",
                 Name: name,
                 Icon: "🕰️",
-                Description: $"Play for a total of {hours:N0} hour{(hours == 1 ? "" : "s")}.",
-                IsUnlocked: s => s.GameTime >= sec));
+                Description: $"Play for a total of {formatted} hour{(hours == 1 ? "" : "s")}.",
+                IsUnlocked: s => s.GameTime >= sec)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.playtime.desc", formatted),
+            });
         }
 
         // ---- Upgrade ownership milestones ----
@@ -247,14 +303,21 @@ public static class Achievements
         foreach (var (threshold, name) in upgradeMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
+            var isAll = threshold >= 83;
             list.Add(new AchievementDefinition(
                 Id: $"upgrades_{threshold}",
                 Name: name,
                 Icon: threshold >= 83 ? "🏆" : threshold >= 50 ? "💎" : "✨",
-                Description: threshold >= 83
+                Description: isAll
                     ? "Own every upgrade in the game."
                     : $"Own {threshold} upgrades.",
-                IsUnlocked: s => s.PurchasedUpgrades.Count >= t));
+                IsUnlocked: s => s.PurchasedUpgrades.Count >= t)
+            {
+                DescOverlay = isAll
+                    ? loc => loc.Overlay("achievement.upgrades.desc_all")
+                    : loc => loc.OverlayFormat("achievement.upgrades.desc", formatted),
+            });
         }
 
         // ---- Sugar lump achievements ----
@@ -271,12 +334,16 @@ public static class Achievements
         foreach (var (threshold, name) in lumpMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"sugar_{threshold}",
                 Name: name,
                 Icon: "🍬",
-                Description: $"Harvest {threshold:N0} sugar lump{(threshold == 1 ? "" : "s")}.",
-                IsUnlocked: s => s.SugarLumps >= t));
+                Description: $"Harvest {formatted} sugar lump{(threshold == 1 ? "" : "s")}.",
+                IsUnlocked: s => s.SugarLumps >= t)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.sugar.desc", formatted),
+            });
         }
 
         // ---- Ascension achievements ----
@@ -298,12 +365,16 @@ public static class Achievements
         foreach (var (threshold, name) in ascendMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"ascend_{threshold}",
                 Name: name,
                 Icon: "🔄",
                 Description: $"Ascend {threshold} times.",
-                IsUnlocked: s => s.AscensionCount >= t));
+                IsUnlocked: s => s.AscensionCount >= t)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.ascend.desc", formatted),
+            });
         }
 
         // ---- Prestige level achievements ----
@@ -318,30 +389,42 @@ public static class Achievements
         foreach (var (threshold, name) in prestigeMilestones)
         {
             var t = threshold;
+            var formatted = threshold.ToString("N0");
             list.Add(new AchievementDefinition(
                 Id: $"prestige_{threshold}",
                 Name: name,
                 Icon: threshold >= 1_000 ? "🌌" : threshold >= 100 ? "🕊️" : "🌠",
-                Description: $"Accumulate {threshold:N0} prestige level{(threshold == 1 ? "" : "s")}.",
-                IsUnlocked: s => s.PrestigeLevel >= t));
+                Description: $"Accumulate {formatted} prestige level{(threshold == 1 ? "" : "s")}.",
+                IsUnlocked: s => s.PrestigeLevel >= t)
+            {
+                DescOverlay = loc => loc.OverlayFormat("achievement.prestige.desc", formatted),
+            });
         }
 
         return list;
     }
 
     /// <summary>
-    /// Builds an original "… baker" name from a power-of-ten threshold, e.g.
-    /// 1e12 → "Trillion baker", 1e14 → "Hundred-trillion baker".
+    /// The English magnitude phrase for a power-of-ten threshold, e.g. 1e12 →
+    /// "Trillion", 1e14 → "Hundred-trillion". Magnitude words stay English by
+    /// design, so this phrase is shared by both the English source name and the
+    /// Chinese overlay template (which only adds the localized suffix).
     /// </summary>
-    private static string BakerName(double threshold)
+    private static string MagnitudePhrase(double threshold)
     {
         var exp = (int)Math.Round(Math.Log10(threshold));
         var tier = exp / 3;
         var remainder = exp % 3;
         var word = MagnitudeWords.TryGetValue(tier, out var w) ? w : "cosmic";
-        var name = char.ToUpperInvariant(word[0]) + word[1..];
-        return remainder == 2 ? $"Hundred-{word} baker" : $"{name} baker";
+        var cap = char.ToUpperInvariant(word[0]) + word[1..];
+        return remainder == 2 ? $"Hundred-{word}" : cap;
     }
+
+    /// <summary>
+    /// Builds an original "… baker" name from a power-of-ten threshold, e.g.
+    /// 1e12 → "Trillion baker", 1e14 → "Hundred-trillion baker".
+    /// </summary>
+    private static string BakerName(double threshold) => $"{MagnitudePhrase(threshold)} baker";
 
     /// <summary>
     /// Builds an original CPS-milestone name from a threshold, e.g. 1e6 →
@@ -364,11 +447,7 @@ public static class Achievements
             };
         }
 
-        var tier = exp / 3;
-        var remainder = exp % 3;
-        var word = MagnitudeWords.TryGetValue(tier, out var w) ? w : "cosmic";
-        var name = char.ToUpperInvariant(word[0]) + word[1..];
-        return remainder == 2 ? $"Hundred-{word} per second" : $"{name} per second";
+        return $"{MagnitudePhrase(threshold)} per second";
     }
 
     /// <summary>

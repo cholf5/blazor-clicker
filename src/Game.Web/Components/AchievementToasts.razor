@@ -1,13 +1,15 @@
 @* Fixed-position stack of achievement unlock notifications, auto-dismissed
    a few seconds after appearing. *@
 
+@inject ILocalizer Loc
+
 <div class="ach-toasts">
     @foreach (var toast in _toasts)
     {
         <div class="ach-toast">
             <div class="ach-toast-icon">@toast.Icon</div>
             <div class="ach-toast-body">
-                <div class="ach-toast-title">Achievement unlocked!</div>
+                <div class="ach-toast-title">@Loc["ui.achievements.toast_title"]</div>
                 <div class="ach-toast-name">@toast.Name</div>
             </div>
         </div>
@@ -27,7 +29,7 @@
         foreach (var id in State.DrainAchievementNotifications())
         {
             var def = Achievements.Get(id);
-            _toasts.Add(new Toast(def.Name, def.Icon, DateTime.UtcNow));
+            _toasts.Add(new Toast(def.DisplayName(Loc), def.Icon, DateTime.UtcNow));
             newlyUnlocked = true;
         }
         // Age out ones older than 4 seconds.

@@ -1,5 +1,7 @@
 namespace Game.Core.Domain;
 
+using Game.Core.Localization;
+
 /// <summary>
 /// Kinds of effect an upgrade can apply to the game economy.
 /// Kept as an enum + parameters combo (rather than a class hierarchy)
@@ -35,6 +37,13 @@ public enum UpgradeCategory
 /// Immutable definition of one upgrade. The unlock predicate is evaluated
 /// against a live <see cref="GameState"/>; when true the upgrade appears
 /// in the shop.
+///
+/// <see cref="Name"/> and <see cref="Description"/> are the inline English
+/// source strings. <see cref="NameOverlay"/> / <see cref="DescOverlay"/> are
+/// optional closures that produce the localized string for the current
+/// language (used by generated families such as building-tier upgrades, which
+/// compose their text from sub-keys); when null, display falls back to an
+/// id-derived overlay key and finally to the English source.
 /// </summary>
 public sealed record UpgradeDefinition(
     string Id,
@@ -46,4 +55,11 @@ public sealed record UpgradeDefinition(
     UpgradeEffectKind EffectKind,
     double EffectValue,
     BuildingId? TargetBuilding,
-    Func<GameState, bool> IsUnlocked);
+    Func<GameState, bool> IsUnlocked)
+{
+    /// <summary>Optional localized-name factory; overrides the id-derived overlay lookup.</summary>
+    public Func<ILocalizer, string?>? NameOverlay { get; init; }
+
+    /// <summary>Optional localized-description factory; overrides the id-derived overlay lookup.</summary>
+    public Func<ILocalizer, string?>? DescOverlay { get; init; }
+}

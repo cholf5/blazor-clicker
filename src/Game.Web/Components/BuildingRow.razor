@@ -2,6 +2,7 @@
    styling. Emits OnBuy for the parent to invoke on GameState. *@
 
 @inject TooltipService Tooltip
+@inject ILocalizer Loc
 
 @if (Locked)
 {
@@ -14,8 +15,8 @@
             disabled>
         <span class="building-icon">🔒</span>
         <span class="building-body">
-            <span class="building-name">???</span>
-            <span class="building-cost">Unlocks at @NumberFormat.Format(unlockThreshold) baked</span>
+            <span class="building-name">@Loc["ui.building.locked_name"]</span>
+            <span class="building-cost">@Loc.Format("ui.building.unlocks_at", NumberFormat.Format(unlockThreshold))</span>
         </span>
     </button>
 }
@@ -36,7 +37,7 @@ else
             disabled="@(!canAffordBulk)">
         <span class="building-icon">@Definition.Icon</span>
         <span class="building-body">
-            <span class="building-name">@Definition.Name</span>
+            <span class="building-name">@Definition.DisplayName(Loc)</span>
             <span class="building-cost">
                 @NumberFormat.Format(bulkCost)
                 @if (BulkAmount > 1) { <span class="bulk-tag">× @BulkAmount</span> }
@@ -44,12 +45,12 @@ else
             <span class="building-info">
                 @if (owned > 0)
                 {
-                    <span>owns @owned</span>
-                    <span>— @NumberFormat.Format(totalCps) cps</span>
+                    <span>@Loc.Format("ui.building.owns", owned)</span>
+                    <span>@Loc.Format("ui.building.cps_total", NumberFormat.Format(totalCps))</span>
                 }
                 else
                 {
-                    <span>— @NumberFormat.Format(unitCps) cps each</span>
+                    <span>@Loc.Format("ui.building.cps_each", NumberFormat.Format(unitCps))</span>
                 }
             </span>
         </span>
@@ -72,9 +73,9 @@ else
 
     private RenderFragment BuildLockedTooltip() =>
         @<TooltipCard Icon="🔒"
-                      Title="???"
+                      Title="@Loc["ui.building.locked_name"]"
                       CssClass="building"
-                      Flavor="Keep baking to reveal the next building." />;
+                      Flavor="@Loc["ui.building.locked_flavor"]" />;
 
     private RenderFragment BuildTooltip()
     {
@@ -86,34 +87,34 @@ else
 
         var rows = new List<(string, string)>
         {
-            ("Owned", owned.ToString()),
-            ("Each produces", $"{NumberFormat.Format(unitCps)} cps"),
+            (Loc["ui.building.owned"], owned.ToString()),
+            (Loc["ui.building.each_produces"], Loc.Format("ui.unit.cps", NumberFormat.Format(unitCps))),
         };
 
         if (owned > 0)
         {
-            rows.Add(("Total from these", $"{NumberFormat.Format(totalCps)} cps"));
+            rows.Add((Loc["ui.building.total_from"], Loc.Format("ui.unit.cps", NumberFormat.Format(totalCps))));
             if (globalCps > 0)
             {
-                rows.Add(("Share of your cps", $"{totalCps / globalCps * 100:0.#}%"));
+                rows.Add((Loc["ui.building.share"], $"{totalCps / globalCps * 100:0.#}%"));
             }
         }
 
         // How long one copy takes to pay for itself from its own output.
         if (unitCps > 0)
         {
-            rows.Add(("Pays for itself in", FormatSeconds(unitCost / unitCps)));
+            rows.Add((Loc["ui.building.pays_for"], FormatSeconds(unitCost / unitCps)));
         }
 
         var costValue = NumberFormat.Format(BulkAmount > 1 ? State.BulkBuildingCost(Definition.Id, BulkAmount) : unitCost)
             + (BulkAmount > 1 ? $" ×{BulkAmount}" : "");
 
         return @<TooltipCard Icon="@Definition.Icon"
-                             Title="@Definition.Name"
+                             Title="@Definition.DisplayName(Loc)"
                              CssClass="building"
                              Cost="@costValue"
                              Rows="rows"
-                             Flavor="@Definition.FlavorText" />;
+                             Flavor="@Definition.DisplayFlavor(Loc)" />;
     }
 
     private static string FormatSeconds(double seconds)

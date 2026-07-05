@@ -125,6 +125,36 @@ public class SaveSystemTests
         Assert.InRange(savedAt, now - 10, now + 10);
     }
 
+    [Fact]
+    public void Migrate_V3Save_LeavesLanguageNull()
+    {
+        // A v3 save has no Language field; migration to v4 must leave the
+        // chosen language null so the player follows the system language.
+        var v3Json = """
+        {
+          "Version": 3,
+          "Cookies": 10,
+          "TotalCookiesBaked": 10,
+          "AllTimeCookiesBaked": 10,
+          "BuildingCounts": {},
+          "PurchasedUpgrades": [],
+          "UnlockedAchievements": []
+        }
+        """;
+
+        var state = SaveSystem.DeserializeFromJson(v3Json);
+        Assert.Null(state.ChosenLanguage);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesChosenLanguage()
+    {
+        var s = new GameState { Cookies = 1, ChosenLanguage = Game.Core.Localization.Language.TraditionalChinese };
+        var json = SaveSystem.SerializeToJson(s);
+        var loaded = SaveSystem.DeserializeFromJson(json);
+        Assert.Equal(Game.Core.Localization.Language.TraditionalChinese, loaded.ChosenLanguage);
+    }
+
     // Expose ToSaveData for the test above without changing production visibility.
 }
 

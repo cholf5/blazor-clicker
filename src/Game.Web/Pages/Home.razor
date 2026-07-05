@@ -2,6 +2,8 @@
 @inject SaveCoordinator Save
 @inject GameLoop Loop
 @inject AudioService Audio
+@inject ILocalizer Loc
+@inject LanguageService Lang
 @implements IDisposable
 
 <PageTitle>Cookie Clicker — Blazor Fan Remake (unofficial)</PageTitle>
@@ -32,8 +34,8 @@
             }
         </div>
         <div class="game-footer">
-            <div class="game-title">Cookie Clicker · Blazor fan remake</div>
-            <div class="game-subtitle">Unofficial. Not affiliated with Orteil / DashNet. Autosaves every 15s to your browser's local storage.</div>
+            <div class="game-title">@Loc["ui.footer.title"]</div>
+            <div class="game-subtitle">@Loc["ui.footer.subtitle"]</div>
         </div>
     </section>
 
@@ -69,9 +71,14 @@
     {
         Loop.OnTick += OnTick;
         Save.OnStateReplaced += OnStateReplacedInternal;
+        Loc.OnLanguageChanged += OnLanguageChanged;
 
         await Audio.InitAsync();
         await Save.LoadAsync();
+
+        // Apply the effective language now the save (and its ChosenLanguage) is
+        // loaded: the persisted choice wins, otherwise auto-detect the browser.
+        await Lang.InitAsync();
 
         _offlineSummary = Save.PendingOfflineSummary;
         if (_offlineSummary is not null) Save.AcknowledgeOfflineSummary();
@@ -143,13 +150,22 @@
         StateHasChanged();
     }
 
-    private void OnStateReplacedInternal() => InvokeAsync(StateHasChanged);
+    private void OnStateReplacedInternal() => InvokeAsync(async () =>
+    {
+        // Import / wipe swapped in a different GameState — re-derive the language
+        // from its ChosenLanguage (or re-detect the system language when null) so
+        // the display and the picker stay in sync with the new save.
+        await Lang.InitAsync();
+        StateHasChanged();
+    });
     private void OnStateReplaced() => StateHasChanged();
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose()
     {
         Loop.OnTick -= OnTick;
         Save.OnStateReplaced -= OnStateReplacedInternal;
+        Loc.OnLanguageChanged -= OnLanguageChanged;
         Loop.Stop();
     }
 

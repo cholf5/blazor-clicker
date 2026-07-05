@@ -1,22 +1,21 @@
 @* "Welcome back" dialog shown after loading a save whose timestamp
    indicates the player was away for at least a threshold amount of time. *@
 
+@inject ILocalizer Loc
+
 @if (Summary is { } s)
 {
     <div class="offline-backdrop" @onclick="Dismiss">
         <div class="offline-dialog" @onclick:stopPropagation="true">
-            <h2>🎉 Welcome back!</h2>
-            <p class="offline-elapsed">You were away for <strong>@FormatElapsed(s.Seconds)</strong>.</p>
-            <p class="offline-earned">
-                Your bakery kept working at <strong>@((s.Efficiency * 100).ToString("0"))%</strong>
-                efficiency and produced:
-            </p>
+            <h2>@Loc["ui.offline.title"]</h2>
+            <p class="offline-elapsed">@Loc.Format("ui.offline.elapsed", FormatElapsed(s.Seconds))</p>
+            <p class="offline-earned">@Loc.Format("ui.offline.earned", (s.Efficiency * 100).ToString("0"))</p>
             <div class="offline-amount">+@NumberFormat.Format(s.CookiesEarned) 🍪</div>
             @if (s.SugarLumpHarvestReady)
             {
-                <p class="offline-lump">A sugar lump ripened while you were away — go harvest it!</p>
+                <p class="offline-lump">@Loc["ui.offline.lump"]</p>
             }
-            <button class="offline-btn" @onclick="Dismiss">Continue baking</button>
+            <button class="offline-btn" @onclick="Dismiss">@Loc["ui.offline.continue"]</button>
         </div>
     </div>
 }

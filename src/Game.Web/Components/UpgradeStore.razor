@@ -2,16 +2,17 @@
    appear, sorted by cost. Grayed-out when unaffordable. *@
 
 @inject TooltipService Tooltip
+@inject ILocalizer Loc
 
 <section class="upgrade-store">
     <header class="upgrade-header">
-        <h2>Upgrades</h2>
-        <span class="upgrade-count">@_available.Count available</span>
+        <h2>@Loc["ui.upgrades.title"]</h2>
+        <span class="upgrade-count">@Loc.Format("ui.upgrades.count", _available.Count)</span>
     </header>
 
     @if (_available.Count == 0)
     {
-        <div class="upgrade-empty">Keep clicking and buying buildings to unlock upgrades.</div>
+        <div class="upgrade-empty">@Loc["ui.upgrades.empty"]</div>
     }
     else
     {
@@ -60,26 +61,27 @@
     {
         var rows = new List<(string, string)>
         {
-            ("Effect", EffectText(up)),
+            (Loc["ui.tooltip.effect"], EffectText(up)),
         };
 
         return @<TooltipCard Icon="@up.Icon"
-                             Title="@up.Name"
-                             Tag="@up.Category.ToString()"
+                             Title="@up.DisplayName(Loc)"
+                             Tag="@Loc[$"ui.upgrade_category.{up.Category.ToString().ToLowerInvariant()}"]"
                              CssClass="upgrade"
                              Cost="@NumberFormat.Format(up.Cost)"
                              Rows="rows"
-                             Flavor="@up.Description" />;
+                             Flavor="@up.DisplayDescription(Loc)" />;
     }
 
-    private static string EffectText(UpgradeDefinition up) => up.EffectKind switch
+    private string EffectText(UpgradeDefinition up) => up.EffectKind switch
     {
         UpgradeEffectKind.BuildingMultiplier =>
-            $"×{up.EffectValue:0.##} {(up.TargetBuilding is { } b ? Buildings.Get(b).Name : "building")} output",
-        UpgradeEffectKind.ClickMultiplier => $"×{up.EffectValue:0.##} click power",
-        UpgradeEffectKind.GlobalCpsMultiplier => $"×{up.EffectValue:0.##} all production",
+            Loc.Format("ui.effect.building_multiplier", up.EffectValue.ToString("0.##"),
+                up.TargetBuilding is { } b ? Buildings.Get(b).DisplayName(Loc) : Loc["ui.effect.building_fallback"]),
+        UpgradeEffectKind.ClickMultiplier => Loc.Format("ui.effect.click_multiplier", up.EffectValue.ToString("0.##")),
+        UpgradeEffectKind.GlobalCpsMultiplier => Loc.Format("ui.effect.global_multiplier", up.EffectValue.ToString("0.##")),
         UpgradeEffectKind.CursorPerNonCursorBuilding =>
-            $"+{NumberFormat.Format(up.EffectValue)} cursor cps per non-cursor building",
-        _ => up.Description,
+            Loc.Format("ui.effect.cursor_synergy", NumberFormat.Format(up.EffectValue)),
+        _ => up.DisplayDescription(Loc),
     };
 }

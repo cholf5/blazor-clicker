@@ -2,10 +2,12 @@
    drives a brief transform:scale animation via a tick counter used as a
    render key. Floating "+N" numbers are spawned by the parent. *@
 
+@inject ILocalizer Loc
+
 <button class="big-cookie @(_bounce ? "bounce" : "")"
         @onclick="HandleClick"
-        aria-label="Bake a cookie"
-        title="Click to bake a cookie">
+        aria-label="@Loc["ui.cookie.aria"]"
+        title="@Loc["ui.cookie.title"]">
     <span class="big-cookie-emoji">🍪</span>
 </button>
 

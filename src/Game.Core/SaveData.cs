@@ -1,4 +1,5 @@
 using Game.Core.Domain;
+using Game.Core.Localization;
 
 namespace Game.Core;
 
@@ -18,8 +19,11 @@ public sealed class SaveData
     ///   false / current game time.
     /// * v3 — added handmade-cookie and frenzy-combo counters for the extra
     ///   achievement families. Older saves default both to 0.
+    /// * v4 — added the player's chosen display language. Nullable: null means
+    ///   "never chosen" (follow the system/browser language), a value means the
+    ///   player picked it explicitly. Older saves migrate to null.
     /// </summary>
-    public int Version { get; set; } = 3;
+    public int Version { get; set; } = 4;
 
     // ---- v1 fields ---------------------------------------------------------
     public double Cookies { get; set; }
@@ -65,4 +69,11 @@ public sealed class SaveData
 
     /// <summary>Golden cookies clicked while a frenzy-type buff was already active.</summary>
     public long GoldenClicksDuringFrenzy { get; set; }
+
+    // ---- v4 additions ------------------------------------------------------
+    /// <summary>
+    /// The language the player explicitly chose, or null to follow the system /
+    /// browser language. Null on saves that pre-date v4.
+    /// </summary>
+    public Language? Language { get; set; }
 }

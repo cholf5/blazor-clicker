@@ -53,6 +53,15 @@
 
     window.cookieClicker = window.cookieClicker || {};
 
+    // ---- Locale detection -----------------------------------------------
+    //
+    // Exposed as a named function (rather than the C# side calling `eval`) so
+    // it survives a strict Content-Security-Policy that forbids eval.
+    window.cookieClicker.getBrowserLanguage = function () {
+        try { return navigator.language || ''; }
+        catch (e) { return ''; }
+    };
+
     window.cookieClicker.setMuted = function (muted) {
         const ctx = ensureAudio();
         if (!ctx || !masterGain) return;

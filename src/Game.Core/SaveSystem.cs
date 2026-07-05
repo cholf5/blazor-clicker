@@ -15,7 +15,7 @@ namespace Game.Core;
 /// </summary>
 public static class SaveSystem
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -108,6 +108,13 @@ public static class SaveSystem
                     // v2 → v3: new counters. No data to backfill — HandmadeCookies
                     // and GoldenClicksDuringFrenzy simply start at 0 for old saves.
                     data.Version = 3;
+                    break;
+
+                case 3:
+                    // v3 → v4: added the chosen-language field. Nothing to backfill —
+                    // leaving Language null makes old saves follow the system language,
+                    // which is exactly the "never chosen" behaviour we want.
+                    data.Version = 4;
                     break;
 
                 default:

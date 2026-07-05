@@ -1,18 +1,20 @@
 @* Top-of-column stats panel. Reads live from GameState — parent controls
    re-render frequency by subscribing to the game loop. *@
 
+@inject ILocalizer Loc
+
 <div class="stats">
     <div class="stats-bank">
         <div class="stats-bank-count">@NumberFormat.Format(State.Cookies)</div>
-        <div class="stats-bank-label">cookie@(State.Cookies == 1 ? "" : "s")</div>
+        <div class="stats-bank-label">@Loc["ui.stats.cookies_unit"]</div>
     </div>
     <div class="stats-cps">
-        per second: <strong>@NumberFormat.Format(State.CurrentCps())</strong>
+        @Loc["ui.stats.per_second"] <strong>@NumberFormat.Format(State.CurrentCps())</strong>
     </div>
     <div class="stats-meta">
-        <span title="Total cookies ever baked">baked: @NumberFormat.Format(State.TotalCookiesBaked)</span>
-        <span title="Manual clicks so far">clicks: @NumberFormat.Format(State.HandmadeClicks)</span>
-        <span title="Achievements unlocked">🏆 @State.UnlockedAchievements.Count / @Achievements.All.Count</span>
+        <span title="@Loc["ui.stats.baked_title"]">@Loc.Format("ui.stats.baked", NumberFormat.Format(State.TotalCookiesBaked))</span>
+        <span title="@Loc["ui.stats.clicks_title"]">@Loc.Format("ui.stats.clicks", NumberFormat.Format(State.HandmadeClicks))</span>
+        <span title="@Loc["ui.stats.ach_title"]">🏆 @State.UnlockedAchievements.Count / @Achievements.All.Count</span>
     </div>
     @if (State.Buffs.Count > 0)
     {
@@ -31,10 +33,10 @@
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
 
-    private static string BuffLabel(GoldenCookieEffect e) => e switch
+    private string BuffLabel(GoldenCookieEffect e) => e switch
     {
-        GoldenCookieEffect.Frenzy => "Frenzy ×7 CPS",
-        GoldenCookieEffect.ClickFrenzy => "Click frenzy ×777",
+        GoldenCookieEffect.Frenzy => Loc["ui.buff.frenzy"],
+        GoldenCookieEffect.ClickFrenzy => Loc["ui.buff.click_frenzy"],
         _ => e.ToString()
     };
 }

@@ -1,0 +1,41 @@
+@* Language selector dropdown. Lets the player switch display language or
+   revert to following the system language. Persists the choice via
+   LanguageService and re-renders the whole app through OnLanguageChanged. *@
+
+@inject LanguageService Lang
+@inject ILocalizer Loc
+
+<div class="language-select" title="@Loc["ui.settings.language"]">
+    <span class="language-icon">🌐</span>
+    <select @onchange="OnChange" value="@CurrentValue">
+        <option value="system">@Loc["ui.language.system"]</option>
+        <option value="english">@Loc["ui.language.english"]</option>
+        <option value="zh_hans">@Loc["ui.language.zh_hans"]</option>
+        <option value="zh_hant">@Loc["ui.language.zh_hant"]</option>
+    </select>
+</div>
+
+@code {
+    // "system" when following the browser; otherwise the explicit choice.
+    private string CurrentValue => Lang.IsFollowingSystem
+        ? "system"
+        : Lang.Current switch
+        {
+            Language.SimplifiedChinese => "zh_hans",
+            Language.TraditionalChinese => "zh_hant",
+            _ => "english",
+        };
+
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        Language? choice = value switch
+        {
+            "english" => Language.English,
+            "zh_hans" => Language.SimplifiedChinese,
+            "zh_hant" => Language.TraditionalChinese,
+            _ => null, // "system"
+        };
+        await Lang.ChooseAsync(choice);
+    }
+}

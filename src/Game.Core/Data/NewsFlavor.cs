@@ -1,76 +1,98 @@
 using Game.Core.Domain;
+using Game.Core.Localization;
 
 namespace Game.Core.Data;
 
 /// <summary>
-/// Flavor text that scrolls in the news ticker. Two kinds of entries:
+/// Flavor text that scrolls in the news ticker, expressed as translation keys
+/// rather than literal strings — the actual English wording lives in the
+/// English translation dictionary (the single source), and the UI resolves a
+/// key against the current language at display time. Two kinds of ambient entry:
 ///
-/// * <see cref="Idle"/> — ambient snippets shown at random between events.
-/// * <see cref="ProgressMessages"/> — milestone lines tied to how many
-///   cookies the player has ever baked, giving the ticker some feel of
-///   progression.
+/// * <see cref="IdleKeys"/> — ambient snippets shown at random between events.
+/// * <see cref="ProgressMessages"/> — milestone lines tied to how many cookies
+///   the player has ever baked, giving the ticker a sense of progression.
 ///
-/// Actual "event" lines (achievements, golden cookies, sugar lumps,
-/// ascensions) are enqueued directly by <see cref="GameState"/> and take
-/// priority over the ambient pool.
+/// Actual "event" lines (achievements, golden cookies, sugar lumps, ascensions)
+/// are enqueued by <see cref="GameState"/> as <see cref="NewsMessage"/>s and
+/// take priority over the ambient pool.
 /// </summary>
 public static class NewsFlavor
 {
-    /// <summary>Random ambient news headlines. Original writing.</summary>
-    public static readonly IReadOnlyList<string> Idle =
+    /// <summary>Keys for the random ambient headlines. Wording lives in the translation dictionaries.</summary>
+    public static readonly IReadOnlyList<string> IdleKeys =
     [
-        "Study finds cookies remain scientifically delicious.",
-        "Local grandma nominated for prestigious baking award — again.",
-        "Portal to cookie dimension declared 'entirely stable, don't worry about it'.",
-        "Wizard tower unionises; demands better working conditions and fewer eldritch summonings.",
-        "Farmers report bumper crop of chocolate chips this season.",
-        "Cursor factory produces one billionth pointer, celebrates modestly.",
-        "Time machine repair shop backed up until last Tuesday.",
-        "Alchemists insist that turning cookies into gold is 'more of an art than a science'.",
-        "Antimatter condenser meets safety inspection with only minor universe-warping.",
-        "Prism refracts sunbeam directly into oven; bakery hailed as innovation hub.",
-        "Chancemaker rolls a nat 20 on 'bake a really good batch'.",
-        "Fractal engine outputs infinite cookies; storage remains the bottleneck.",
-        "Idleverse council reports 'no notable variance' in cookie output across realities.",
-        "Javascript console: `undefined is not a cookie` — engineers reassured that everything is fine.",
-        "Bank vault repurposed for cookie storage; interest paid in crumbs.",
-        "Shipment routes now avoid known black holes on request.",
-        "Editorial: are we clicking too much? A dietician weighs in.",
-        "Local news declares 2026 'the year of the cookie'. Again.",
-        "Chocolate futures spike after unusually productive Tuesday.",
-        "Studies suggest reading news headlines improves the taste of cookies. Findings unconfirmed.",
+        "news.idle.delicious",
+        "news.idle.grandma_award",
+        "news.idle.portal_stable",
+        "news.idle.wizard_union",
+        "news.idle.bumper_crop",
+        "news.idle.cursor_billionth",
+        "news.idle.time_machine_repair",
+        "news.idle.alchemy_art",
+        "news.idle.antimatter_safety",
+        "news.idle.prism_innovation",
+        "news.idle.chancemaker_nat20",
+        "news.idle.fractal_storage",
+        "news.idle.idleverse_variance",
+        "news.idle.js_undefined",
+        "news.idle.bank_crumbs",
+        "news.idle.shipment_blackholes",
+        "news.idle.clicking_editorial",
+        "news.idle.year_of_cookie",
+        "news.idle.chocolate_futures",
+        "news.idle.headlines_taste",
     ];
 
     /// <summary>
-    /// Progressive headlines gated on lifetime bake count. The picker walks
-    /// the list in order and shows the first message whose threshold has
-    /// been crossed but not yet crossed the next one.
+    /// Progressive headline keys gated on lifetime bake count. The picker walks
+    /// the list in order and returns the last key whose threshold has been
+    /// crossed.
     /// </summary>
-    public static readonly IReadOnlyList<(double Threshold, string Message)> ProgressMessages =
+    public static readonly IReadOnlyList<(double Threshold, string Key)> ProgressMessages =
     [
-        (0,                     "Welcome to your bakery. Click the cookie to get started."),
-        (100,                   "Your first hundred cookies are baked. The kitchen smells great."),
-        (10_000,                "News: local bakery wins bake-off with entry titled 'more'."),
-        (1_000_000,             "You are now officially a cookie millionaire. Consider hiring an accountant."),
-        (1_000_000_000,         "Cookie output has surpassed several small industries. Regulators inquire."),
-        (1_000_000_000_000,     "You have baked a trillion cookies. A trillion. Read that again."),
-        (1e15,                  "Interdimensional bakers request a friendly rivalry match."),
-        (1e18,                  "Astronomers redefine 'cosmic scale' after seeing your bank."),
-        (1e21,                  "Physicists concede that the universe may in fact be a cookie."),
+        (0,                 "news.progress.welcome"),
+        (100,               "news.progress.first_hundred"),
+        (10_000,            "news.progress.bake_off"),
+        (1_000_000,         "news.progress.millionaire"),
+        (1_000_000_000,     "news.progress.industries"),
+        (1_000_000_000_000, "news.progress.trillion"),
+        (1e15,              "news.progress.interdimensional"),
+        (1e18,              "news.progress.cosmic_scale"),
+        (1e21,              "news.progress.universe_cookie"),
     ];
 
-    /// <summary>Pick an ambient message deterministically for the given seed.</summary>
-    public static string PickIdle(Random rng) => Idle[rng.Next(Idle.Count)];
+    /// <summary>Pick an ambient message key deterministically for the given seed.</summary>
+    public static string PickIdleKey(Random rng) => IdleKeys[rng.Next(IdleKeys.Count)];
 
-    /// <summary>Find the newest progression message the player has unlocked.</summary>
-    public static string? PickProgress(GameState state)
+    /// <summary>Find the newest progression message key the player has unlocked.</summary>
+    public static string? PickProgressKey(GameState state)
     {
         string? current = null;
-        foreach (var (threshold, msg) in ProgressMessages)
+        foreach (var (threshold, key) in ProgressMessages)
         {
-            if (state.AllTimeCookiesBaked >= threshold) current = msg;
+            if (state.AllTimeCookiesBaked >= threshold) current = key;
             else break;
         }
         return current;
+    }
+
+    /// <summary>
+    /// Resolve a queued <see cref="NewsMessage"/> to a localized display string.
+    /// The achievement-unlock line carries an achievement id in its args, which
+    /// is expanded to that achievement's localized name here so the ticker text
+    /// tracks the current language.
+    /// </summary>
+    public static string Resolve(NewsMessage msg, ILocalizer loc)
+    {
+        var args = msg.Args ?? Array.Empty<object>();
+        if (msg.Key == "news.event.achievement" && args.Length == 1 && args[0] is string achId)
+        {
+            // Resolve the achievement's localized name; guard against an unknown
+            // id so a bad enqueue can never crash the ticker.
+            var name = Achievements.TryGet(achId, out var def) ? def!.DisplayName(loc) : achId;
+            return loc.Format(msg.Key, name);
+        }
+        return args.Length == 0 ? loc[msg.Key] : loc.Format(msg.Key, args);
     }
 }

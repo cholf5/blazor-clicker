@@ -2,21 +2,23 @@
    for the paste-in-a-string flow. *@
 
 @inject SaveCoordinator Save
+@inject ILocalizer Loc
 
 <div class="save-menu">
-    <button class="save-btn" @onclick="OnManualSave" title="Save now">💾 Save</button>
-    <button class="save-btn" @onclick="OnExport" title="Copy save to clipboard">📤 Export</button>
-    <button class="save-btn" @onclick="ToggleImport" title="Paste an exported save">📥 Import</button>
-    <button class="save-btn danger" @onclick="OnWipe" title="Delete save and start over">🗑 Wipe</button>
+    <button class="save-btn" @onclick="OnManualSave" title="@Loc["ui.save.save_title"]">💾 @Loc["ui.save.save"]</button>
+    <button class="save-btn" @onclick="OnExport" title="@Loc["ui.save.export_title"]">📤 @Loc["ui.save.export"]</button>
+    <button class="save-btn" @onclick="ToggleImport" title="@Loc["ui.save.import_title"]">📥 @Loc["ui.save.import"]</button>
+    <button class="save-btn danger" @onclick="OnWipe" title="@Loc["ui.save.wipe_title"]">🗑 @Loc["ui.save.wipe"]</button>
     <MuteButton />
+    <LanguageSelect />
 
     @if (_showImport)
     {
         <div class="save-import">
-            <textarea @bind="_importText" placeholder="Paste an exported save…"></textarea>
+            <textarea @bind="_importText" placeholder="@Loc["ui.save.import_placeholder"]"></textarea>
             <div class="save-import-actions">
-                <button @onclick="OnImport">Load</button>
-                <button @onclick="() => _showImport = false">Cancel</button>
+                <button @onclick="OnImport">@Loc["ui.save.load"]</button>
+                <button @onclick="() => _showImport = false">@Loc["ui.save.cancel"]</button>
             </div>
             @if (!string.IsNullOrEmpty(_importError))
             {
@@ -42,7 +44,7 @@
     private async Task OnManualSave()
     {
         await Save.SaveNowAsync();
-        FlashToast("Saved.");
+        FlashToast(Loc["ui.save.saved"]);
     }
 
     private async Task OnExport()
@@ -51,11 +53,11 @@
         try
         {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", s);
-            FlashToast("Exported save copied to clipboard.");
+            FlashToast(Loc["ui.save.exported"]);
         }
         catch
         {
-            FlashToast("Export ready — paste it somewhere safe.");
+            FlashToast(Loc["ui.save.export_manual"]);
         }
     }
 
@@ -70,20 +72,20 @@
             _showImport = false;
             _importText = "";
             await OnStateChanged.InvokeAsync();
-            FlashToast("Save loaded.");
+            FlashToast(Loc["ui.save.loaded"]);
         }
         catch (Exception ex)
         {
-            _importError = "Couldn't load save: " + ex.Message;
+            _importError = Loc.Format("ui.save.import_error", ex.Message);
         }
     }
 
     private async Task OnWipe()
     {
-        if (!await Confirm("Really wipe your save and start over?")) return;
+        if (!await Confirm(Loc["ui.save.wipe_confirm"])) return;
         await Save.WipeAsync();
         await OnStateChanged.InvokeAsync();
-        FlashToast("Save wiped.");
+        FlashToast(Loc["ui.save.wiped"]);
     }
 
     private async Task<bool> Confirm(string message)

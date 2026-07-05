@@ -2,12 +2,14 @@
    using ScreenX/Y (0..1 fractions). Auto-dismisses when the game clears
    ActiveGolden. *@
 
+@inject ILocalizer Loc
+
 @if (State.ActiveGolden is { } cookie)
 {
     <button class="golden-cookie"
             style="@GetStyle(cookie)"
             @onclick="OnClick"
-            aria-label="Golden cookie!">
+            aria-label="@Loc["ui.golden.aria"]">
         🌟
     </button>
 }

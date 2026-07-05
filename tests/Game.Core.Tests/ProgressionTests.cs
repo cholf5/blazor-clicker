@@ -1,5 +1,6 @@
 using Game.Core.Domain;
 using Game.Core.Data;
+using Game.Core.Localization;
 
 namespace Game.Core.Tests;
 
@@ -224,6 +225,9 @@ public class ProgressionTests
         s.Click();
         s.Tick(0.1); // achievement predicates are evaluated inside Tick
         var msgs = s.DrainNewsMessages();
-        Assert.Contains(msgs, m => m.Contains("First bite"));
+        // News lines are now keys + args; resolve them through the English
+        // localizer and assert the "First bite" unlock line came through.
+        var loc = new Localizer(Language.English);
+        Assert.Contains(msgs, m => NewsFlavor.Resolve(m, loc).Contains("First bite"));
     }
 }

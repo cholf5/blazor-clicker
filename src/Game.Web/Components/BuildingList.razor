@@ -1,9 +1,11 @@
 @* Vertical list of every building in the shop, with a small selector at
    the top that lets the player buy 1 / 10 / 100 at a time. *@
 
+@inject ILocalizer Loc
+
 <section class="building-list">
     <header class="building-list-header">
-        <h2>Buildings</h2>
+        <h2>@Loc["ui.buildings.title"]</h2>
         <div class="bulk-select">
             @foreach (var opt in _bulkOptions)
             {

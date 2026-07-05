@@ -6,6 +6,7 @@
      lifetime-baked thresholds. *@
 
 @implements IDisposable
+@inject ILocalizer Loc
 
 <div class="news-ticker" role="status" aria-label="News ticker">
     <span class="news-icon">📰</span>
@@ -18,10 +19,16 @@
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
 
     private readonly Random _rng = new();
-    private readonly Queue<string> _pending = new();
+    private readonly Queue<NewsMessage> _pending = new();
     private DateTime _nextRotate = DateTime.UtcNow;
-    private string _current = "Welcome to your bakery. Click the cookie to get started.";
+    private string _current = "";
     private int _currentKey;
+
+    protected override void OnInitialized()
+    {
+        // Seed with the welcome line in the current language.
+        _current = Loc["news.progress.welcome"];
+    }
 
     /// <summary>
     /// Called by the parent every frame so we can drain the state queue and
@@ -29,7 +36,7 @@
     /// </summary>
     public void Pump()
     {
-        // Absorb any freshly emitted event messages.
+        // Absorb any freshly emitted event messages (translation key + args).
         foreach (var msg in State.DrainNewsMessages())
             _pending.Enqueue(msg);
 
@@ -38,15 +45,16 @@
         string next;
         if (_pending.TryDequeue(out var queued))
         {
-            next = queued;
+            next = NewsFlavor.Resolve(queued, Loc);
             _nextRotate = DateTime.UtcNow.AddSeconds(5);
         }
         else
         {
             // Alternate between ambient flavor and the current progression tier.
-            next = _rng.Next(3) == 0
-                ? NewsFlavor.PickProgress(State) ?? NewsFlavor.PickIdle(_rng)
-                : NewsFlavor.PickIdle(_rng);
+            var key = _rng.Next(3) == 0
+                ? NewsFlavor.PickProgressKey(State) ?? NewsFlavor.PickIdleKey(_rng)
+                : NewsFlavor.PickIdleKey(_rng);
+            next = Loc[key];
             _nextRotate = DateTime.UtcNow.AddSeconds(8);
         }
 

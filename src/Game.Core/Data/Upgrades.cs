@@ -1,4 +1,5 @@
 using Game.Core.Domain;
+using Game.Core.Localization;
 
 namespace Game.Core.Data;
 
@@ -14,13 +15,14 @@ namespace Game.Core.Data;
 public static class Upgrades
 {
     // Standard tier costs (multiples of the building's base cost) and
-    // unlock thresholds (buildings owned). Prefix names are original.
-    private static readonly (int Ownership, int CostMultiplier, string TierPrefix)[] Tiers =
+    // unlock thresholds (buildings owned). Prefix names are original. TierKey
+    // keys the localized prefix word in the translation dictionaries.
+    private static readonly (int Ownership, int CostMultiplier, string TierPrefix, string TierKey)[] Tiers =
     [
-        (1,   100,        "Improved"),
-        (5,   500,        "Refined"),
-        (25,  50_000,     "Advanced"),
-        (50,  5_000_000,  "Legendary"),
+        (1,   100,        "Improved",  "improved"),
+        (5,   500,        "Refined",   "refined"),
+        (25,  50_000,     "Advanced",  "advanced"),
+        (50,  5_000_000,  "Legendary", "legendary"),
     ];
 
     public static readonly IReadOnlyList<UpgradeDefinition> All = BuildAll();
@@ -39,13 +41,14 @@ public static class Upgrades
         // ---- Building tier upgrades: each doubles that building's CPS ----
         foreach (var building in Buildings.All)
         {
-            foreach (var (threshold, costMult, tierPrefix) in Tiers)
+            foreach (var (threshold, costMult, tierPrefix, tierKey) in Tiers)
             {
                 var id = $"tier_{building.Id}_{threshold}";
                 var name = $"{tierPrefix} {building.Name.ToLowerInvariant()}s";
                 var cost = building.BaseCost * costMult;
                 var thresholdCaptured = threshold;
                 var buildingIdCaptured = building.Id;
+                var tierKeyCaptured = tierKey;
 
                 list.Add(new UpgradeDefinition(
                     Id: id,
@@ -57,7 +60,16 @@ public static class Upgrades
                     EffectKind: UpgradeEffectKind.BuildingMultiplier,
                     EffectValue: 2.0,
                     TargetBuilding: building.Id,
-                    IsUnlocked: state => state.BuildingCounts.TryGetValue(buildingIdCaptured, out var c) && c >= thresholdCaptured));
+                    IsUnlocked: state => state.BuildingCounts.TryGetValue(buildingIdCaptured, out var c) && c >= thresholdCaptured)
+                {
+                    // Compose "<tier prefix> <building>" and the effect blurb from
+                    // localized sub-pieces: the tier prefix word and the (already
+                    // localized) building name.
+                    NameOverlay = loc => loc.OverlayFormat(
+                        $"upgrade.tier.{tierKeyCaptured}.name", Buildings.Get(buildingIdCaptured).DisplayName(loc)),
+                    DescOverlay = loc => loc.OverlayFormat(
+                        "upgrade.tier.desc", Buildings.Get(buildingIdCaptured).DisplayName(loc), thresholdCaptured),
+                });
             }
         }
 

@@ -3,31 +3,32 @@
    bar, and a big harvest button that lights up when ripe. *@
 
 @inject AudioService Audio
+@inject ILocalizer Loc
 
 @if (Show)
 {
     <section class="sugar-lump">
         <header class="sugar-lump-header">
-            <h3>Sugar lumps</h3>
+            <h3>@Loc["ui.sugar.title"]</h3>
             <span class="sugar-lump-count">🍬 @State.SugarLumps</span>
         </header>
 
         @if (State.SugarLumpReady)
         {
-            <button class="sugar-lump-btn ripe" @onclick="Harvest" title="Harvest this sugar lump">
+            <button class="sugar-lump-btn ripe" @onclick="Harvest" title="@Loc["ui.sugar.harvest_title"]">
                 <span class="sugar-lump-emoji">🍬</span>
-                <span class="sugar-lump-label">Harvest ripe lump</span>
+                <span class="sugar-lump-label">@Loc["ui.sugar.harvest"]</span>
             </button>
         }
         else
         {
-            <div class="sugar-lump-progress" title="@Tooltip">
+            <div class="sugar-lump-progress" title="@TooltipText">
                 <div class="sugar-lump-progress-fill" style="width: @Progress.ToString("0.##")%"></div>
-                <div class="sugar-lump-progress-label">Growing… @RemainingText</div>
+                <div class="sugar-lump-progress-label">@Loc.Format("ui.sugar.growing", RemainingText)</div>
             </div>
         }
 
-        <p class="sugar-lump-blurb">Each lump grants a permanent +@((ProgressionConfig.SugarLumpCpsBonus * 100).ToString("0.#"))% CPS bonus.</p>
+        <p class="sugar-lump-blurb">@Loc.Format("ui.sugar.blurb", (ProgressionConfig.SugarLumpCpsBonus * 100).ToString("0.#"))</p>
     </section>
 }
 
@@ -55,8 +56,8 @@
         }
     }
 
-    private string Tooltip =>
-        $"Next lump ripens in {RemainingText}. Sugar lumps are permanent CPS bonuses.";
+    private string TooltipText =>
+        Loc.Format("ui.sugar.next_tooltip", RemainingText);
 
     private bool Show =>
         State.AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold

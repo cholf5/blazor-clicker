@@ -1,0 +1,30 @@
+.language-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #1c130a;
+    border: 1px solid #5c4426;
+    border-radius: 6px;
+    padding: 3px 6px;
+}
+
+.language-icon {
+    font-size: 13px;
+    line-height: 1;
+}
+
+.language-select select {
+    background: transparent;
+    color: #ffdc86;
+    border: none;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* The dropdown popup itself renders with the OS palette, so give the options a
+   readable dark-on-light fallback rather than gold-on-transparent. */
+.language-select option {
+    color: #1c130a;
+    background: #f4e9d0;
+}
