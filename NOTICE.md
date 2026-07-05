@@ -21,8 +21,10 @@ This project is:
 - **No original source code** from Cookie Clicker. The gameplay was
   reimplemented from scratch in C# / Blazor.
 - **No original assets.** No sprites, no audio, no icons from the original
-  game are shipped in this repository. All in-game icons are Unicode
-  emoji rendered by the user's system font.
+  game are shipped in this repository. In-game icons are Unicode emoji
+  rendered by the user's system font, with one exception: the decorative
+  cursor-ring finger uses a third-party open-source icon path — see
+  *Third-party assets* below.
 - **No original flavor text.** All building descriptions, upgrade
   descriptions, and achievement names in this repository were rewritten
   for this remake. Where earlier drafts of this codebase mirrored the
@@ -45,6 +47,15 @@ This project is:
   and documentation, always qualified with words like *"fan remake"*,
   *"reimplementation"*, or *"unofficial"* to make the non-official status
   unambiguous.
+
+## Third-party assets
+
+- **Font Awesome Free** (<https://fontawesome.com>) — the "hand-pointer"
+  (solid) icon path is used for the decorative cursor-ring fingers drawn
+  around the big cookie. Font Awesome Free icons are licensed under
+  **CC BY 4.0** (<https://fontawesome.com/license/free>). The path is
+  embedded inline in `Game.Web/Components/CursorRing.razor`. This is an
+  original Font Awesome icon, unrelated to Cookie Clicker's assets.
 
 ## Attribution
 

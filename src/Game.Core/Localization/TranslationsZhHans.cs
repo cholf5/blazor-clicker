@@ -83,6 +83,22 @@ public static class TranslationsZhHans
         ["ui.milk.flavor"] = "每解锁一个成就，牛奶都会上涨。牛奶本身不产生任何 CPS——是你的猫咪科技把它转化成了额外产量。",
         ["ui.milk.flavor_none"] = "每解锁一个成就，牛奶都会上涨。但牛奶本身不产生任何东西：在你购买猫咪科技之前，加成会一直是 ×1。猫咪科技会把牛奶转化为额外的饼干，去「科技」面板里找找看。",
 
+        // ---- 光标环（绕饼干旋转的装饰手指 + 提示）----------------------------
+        ["ui.cursorring.title"] = "光标",
+        ["ui.cursorring.owned"] = "光标数量",
+        ["ui.cursorring.tier"] = "环的颜色",
+        ["ui.cursorring.per_finger"] = "每根手指代表",
+        ["ui.cursorring.next_merge"] = "距下次合并还需",
+        ["ui.cursorring.tier.0"] = "白色",
+        ["ui.cursorring.tier.1"] = "绿色",
+        ["ui.cursorring.tier.2"] = "蓝色",
+        ["ui.cursorring.tier.3"] = "紫色",
+        ["ui.cursorring.tier.4"] = "橙色",
+        ["ui.cursorring.tier.5"] = "红色",
+        ["ui.cursorring.tier.6"] = "金色",
+        ["ui.cursorring.flavor"] = "每个光标都替你点击饼干，一边工作一边绕着饼干转。当五层环填满后，每两根手指就会合并成一根更亮的手指，价值翻倍。",
+        ["ui.cursorring.flavor_max"] = "光标环已燃成金色，再也无法生长——每根手指都已臻至巅峰。你的光标，说实话，已经开始炫技了。",
+
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "成就",
         ["ui.achievements.locked_title"] = "？？？",

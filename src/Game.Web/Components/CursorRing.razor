@@ -1,0 +1,123 @@
+@* Decorative ring of fingers orbiting the big cookie, echoing the original
+   game's cursors. Purely visual: the economic effect of cursors lives in
+   GameState (passive CPS + cursor synergy). The finger count tracks the owned
+   Cursor building live (Home re-renders each tick); layout/colour math lives in
+   the pure CursorRingLayout so it can be unit-tested without a browser.
+
+   Sits behind the cookie (z-index:1) with pointer-events:none so it never
+   intercepts clicks. Hovering shows a tooltip explaining what the ring is and
+   what its current colour tier means. *@
+
+@inject TooltipService Tooltip
+@inject ILocalizer Loc
+
+@{
+    var model = CursorRingLayout.Compute(CursorCount());
+}
+
+@if (model.Fingers.Count > 0)
+{
+    <div class="cursor-ring"
+         @ref="_ring"
+         @onmouseover="ShowTooltip"
+         @onmouseout="Tooltip.Hide"
+         aria-hidden="true">
+        @foreach (var f in model.Fingers)
+        {
+            <div class="cursor-finger tier-@f.Tier"
+                 @key="f.GlobalIndex"
+                 style="--angle: @Deg(f.AngleDeg); --radius: @Rem(f.RadiusRem); --phase: @Sec(f.Phase);">
+                <div class="cursor-finger-poke">
+                    @* Pointing hand (index finger extended) — the classic
+                       hyperlink cursor as an icon. SVG path from Font Awesome
+                       Free "hand-pointer" (solid), CC BY 4.0; see NOTICE.md.
+                       Fingertip is at the top of the viewBox; the CSS
+                       rotate(180deg) turns it to point inward at the cookie.
+                       Fill is driven by the tier CSS variable. *@
+                    <svg viewBox="0 0 448 512" class="cursor-finger-svg">
+                        <path d="M128 40c0-22.1 17.9-40 40-40s40 17.9 40 40l0 148.2c8.5-7.6 19.7-12.2 32-12.2c20.6 0 38.2 13 45 31.2c8.8-9.3 21.2-15.2 35-15.2c25.3 0 46 19.5 47.9 44.3c8.5-7.7 19.8-12.3 32.1-12.3c26.5 0 48 21.5 48 48l0 48 0 16 0 48c0 70.7-57.3 128-128 128l-16 0-64 0-.1 0-5.2 0c-5 0-9.9-.3-14.7-1c-55.3-5.6-106.2-34-140-79L8 336c-13.3-17.7-9.7-42.7 8-56s42.7-9.7 56 8l56 74.7L128 40zM240 304c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96zm48-16c-8.8 0-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96c0-8.8-7.2-16-16-16zm80 16c0-8.8-7.2-16-16-16s-16 7.2-16 16l0 96c0 8.8 7.2 16 16 16s16-7.2 16-16l0-96z" />
+                    </svg>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private ElementReference _ring;
+
+    // Home re-renders ~30fps, passing the same mutated GameState, so Blazor would
+    // otherwise re-diff all ~160 finger elements every frame. The ring only
+    // changes when a Cursor is bought, so we gate rendering on the owned count:
+    // skip the frame unless it moved. The tooltip's live values don't rely on
+    // this component re-rendering — TooltipHost re-invokes the builder each tick
+    // via its own subscription — so gating here doesn't stale the tooltip.
+    private long _renderedCount = -1;
+
+    private long CursorCount() => State.BuildingCounts.GetValueOrDefault(BuildingId.Cursor);
+
+    protected override bool ShouldRender()
+    {
+        var count = CursorCount();
+        if (count == _renderedCount)
+        {
+            return false;
+        }
+
+        _renderedCount = count;
+        return true;
+    }
+
+    private void ShowTooltip() => Tooltip.Show(BuildTooltip, _ring);
+
+    // Formatting helpers keep the invariant-culture decimal point out of the
+    // markup (a comma in a CSS value would break the transform).
+    private static string Deg(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + "deg";
+    private static string Rem(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + "rem";
+    private static string Sec(double phase01) =>
+        (phase01 * PokePeriodSeconds).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + "s";
+
+    // Must match the poke animation duration in the .css so phase offsets map to
+    // a full period.
+    private const double PokePeriodSeconds = 1.2;
+
+    // Built fresh on every render (per the TooltipService live-refresh contract)
+    // so the count, tier and merge progress stay live as cursors are bought.
+    private RenderFragment BuildTooltip()
+    {
+        var model = CursorRingLayout.Compute(CursorCount());
+        var tierName = Loc[$"ui.cursorring.tier.{model.Tier}"];
+
+        var rows = new List<(string, string)>
+        {
+            (Loc["ui.cursorring.owned"], $"{model.CursorCount:N0}"),
+            (Loc["ui.cursorring.tier"], tierName),
+        };
+
+        // Each finger represents 2^tier cursors once merging has begun; only
+        // worth stating past the plain white stage.
+        if (model.Tier > 0)
+        {
+            rows.Add((Loc["ui.cursorring.per_finger"], $"×{model.PerFinger:N0}"));
+        }
+
+        // Give the player a concrete goal: how many more cursors until the ring
+        // merges up a colour. Null at the gold ceiling.
+        if (model.NextMergeAt is { } next && next > model.CursorCount)
+        {
+            rows.Add((Loc["ui.cursorring.next_merge"], $"{next - model.CursorCount:N0}"));
+        }
+
+        var flavor = model.NextMergeAt is null
+            ? Loc["ui.cursorring.flavor_max"]
+            : Loc["ui.cursorring.flavor"];
+
+        return @<TooltipCard Icon="🖐️"
+                             Title="@Loc["ui.cursorring.title"]"
+                             CssClass="cursorring"
+                             Rows="rows"
+                             Flavor="@flavor" />;
+    }
+}

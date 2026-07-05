@@ -85,6 +85,22 @@ public static class TranslationsEn
         ["ui.milk.flavor"] = "Milk rises as you unlock achievements. On its own it does nothing — your kitten upgrades are what convert it into extra production.",
         ["ui.milk.flavor_none"] = "Milk rises as you unlock achievements. By itself it produces nothing: the boost stays ×1 until you buy a kitten upgrade, which turns your milk into extra cookies. Look for one in the Upgrades panel.",
 
+        // ---- Cursor ring (decorative orbiting fingers + tooltip) ------------
+        ["ui.cursorring.title"] = "Cursors",
+        ["ui.cursorring.owned"] = "Cursors owned",
+        ["ui.cursorring.tier"] = "Ring colour",
+        ["ui.cursorring.per_finger"] = "Cursors per finger",
+        ["ui.cursorring.next_merge"] = "Cursors to next merge",
+        ["ui.cursorring.tier.0"] = "White",
+        ["ui.cursorring.tier.1"] = "Green",
+        ["ui.cursorring.tier.2"] = "Blue",
+        ["ui.cursorring.tier.3"] = "Purple",
+        ["ui.cursorring.tier.4"] = "Orange",
+        ["ui.cursorring.tier.5"] = "Red",
+        ["ui.cursorring.tier.6"] = "Gold",
+        ["ui.cursorring.flavor"] = "Every cursor taps the cookie for you, orbiting it as it works. Once the rings fill up, each pair merges into a brighter finger worth twice as many.",
+        ["ui.cursorring.flavor_max"] = "The rings burn gold and can grow no further — every finger is worth its maximum. Your cursors are, frankly, showing off now.",
+
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "Achievements",
         ["ui.achievements.locked_title"] = "???",

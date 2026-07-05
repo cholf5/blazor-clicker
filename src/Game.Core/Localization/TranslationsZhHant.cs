@@ -83,6 +83,22 @@ public static class TranslationsZhHant
         ["ui.milk.flavor"] = "每解鎖一個成就，牛奶都會上漲。牛奶本身不產生任何 CPS——是你的貓咪科技把它轉化成了額外產量。",
         ["ui.milk.flavor_none"] = "每解鎖一個成就，牛奶都會上漲。但牛奶本身不產生任何東西：在你購買貓咪科技之前，加成會一直是 ×1。貓咪科技會把牛奶轉化為額外的餅乾，去「科技」面板裡找找看。",
 
+        // ---- 游標環（繞餅乾旋轉的裝飾手指 + 提示）----------------------------
+        ["ui.cursorring.title"] = "游標",
+        ["ui.cursorring.owned"] = "游標數量",
+        ["ui.cursorring.tier"] = "環的顏色",
+        ["ui.cursorring.per_finger"] = "每根手指代表",
+        ["ui.cursorring.next_merge"] = "距下次合併還需",
+        ["ui.cursorring.tier.0"] = "白色",
+        ["ui.cursorring.tier.1"] = "綠色",
+        ["ui.cursorring.tier.2"] = "藍色",
+        ["ui.cursorring.tier.3"] = "紫色",
+        ["ui.cursorring.tier.4"] = "橙色",
+        ["ui.cursorring.tier.5"] = "紅色",
+        ["ui.cursorring.tier.6"] = "金色",
+        ["ui.cursorring.flavor"] = "每個游標都替你點擊餅乾，一邊工作一邊繞著餅乾轉。當五層環填滿後，每兩根手指就會合併成一根更亮的手指，價值翻倍。",
+        ["ui.cursorring.flavor_max"] = "游標環已燃成金色，再也無法生長——每根手指都已臻至巔峰。你的游標，說實話，已經開始炫技了。",
+
         // ---- Achievements panel ---------------------------------------------
         ["ui.achievements.title"] = "成就",
         ["ui.achievements.locked_title"] = "？？？",
