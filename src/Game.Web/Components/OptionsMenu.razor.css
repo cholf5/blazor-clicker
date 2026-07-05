@@ -133,6 +133,27 @@
     box-sizing: border-box;
 }
 
+.save-import-file {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: #cbb99a;
+}
+
+/* "Or [Export to file]" — a text-link-styled button so it reads as an inline
+   alternative action next to the label, not a heavy button. */
+.save-linkbtn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #ffd857;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+.save-linkbtn:hover { color: #ffe89a; }
+
 .save-import-actions { display: flex; gap: 0.4rem; }
 .save-import-actions button {
     padding: 0.35rem 0.75rem;

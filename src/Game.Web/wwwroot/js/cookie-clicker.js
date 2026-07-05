@@ -62,6 +62,25 @@
         catch (e) { return ''; }
     };
 
+    // ---- File download --------------------------------------------------
+    //
+    // Trigger a browser download of a text string as a file. Used by the save
+    // export flow so a player can keep a save as a file, not just on the
+    // clipboard. Builds a Blob + temporary <a download> and clicks it — the
+    // same idiom as the other helpers: a small named function on the
+    // cookieClicker namespace, no eval, no external deps.
+    window.cookieClicker.downloadTextFile = function (filename, text) {
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    };
+
     window.cookieClicker.setMuted = function (muted) {
         const ctx = ensureAudio();
         if (!ctx || !masterGain) return;

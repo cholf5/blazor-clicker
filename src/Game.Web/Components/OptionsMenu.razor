@@ -1,8 +1,10 @@
 @* Options entry point: a single gear button that opens a modal gathering all
    the "rarely touched, orthogonal to gameplay" controls — save data
    (save/export/import/wipe), sound, and language — out of the gameplay column.
-   Owns its own import textarea for the paste-in-a-string flow. *@
+   Owns its own import textarea for the paste-in-a-string flow, plus file-based
+   export (download) and import (InputFile) alongside the clipboard channel. *@
 
+@using Microsoft.AspNetCore.Components.Forms
 @inject SaveCoordinator Save
 @inject ILocalizer Loc
 @implements IDisposable
@@ -24,18 +26,36 @@
                 <h3>@Loc["ui.options.section_data"]</h3>
                 <div class="options-buttons">
                     <button class="save-btn" @onclick="OnManualSave" title="@Loc["ui.save.save_title"]">💾 @Loc["ui.save.save"]</button>
-                    <button class="save-btn" @onclick="OnExport" title="@Loc["ui.save.export_title"]">📤 @Loc["ui.save.export"]</button>
+                    <button class="save-btn" @onclick="ToggleExport" title="@Loc["ui.save.export_title"]">📤 @Loc["ui.save.export"]</button>
                     <button class="save-btn" @onclick="ToggleImport" title="@Loc["ui.save.import_title"]">📥 @Loc["ui.save.import"]</button>
                     <button class="save-btn danger" @onclick="OnWipe" title="@Loc["ui.save.wipe_title"]">🗑 @Loc["ui.save.wipe"]</button>
                 </div>
 
-                @if (_showImport)
+                @if (_panel == SavePanel.Export)
                 {
                     <div class="save-import">
+                        <label class="save-import-file">
+                            @Loc["ui.save.or_prefix"]
+                            <button class="save-linkbtn" @onclick="OnExportFile">@Loc["ui.save.export_file"]</button>
+                        </label>
+                        <textarea readonly>@_exportText</textarea>
+                        <div class="save-import-actions">
+                            <button @onclick="OnCopyExport">@Loc["ui.save.copy"]</button>
+                            <button @onclick="ClosePanel">@Loc["ui.save.cancel"]</button>
+                        </div>
+                    </div>
+                }
+                else if (_panel == SavePanel.Import)
+                {
+                    <div class="save-import">
+                        <label class="save-import-file">
+                            @Loc["ui.save.import_file"]
+                            <InputFile OnChange="OnImportFile" accept=".txt" />
+                        </label>
                         <textarea @bind="_importText" placeholder="@Loc["ui.save.import_placeholder"]"></textarea>
                         <div class="save-import-actions">
                             <button @onclick="OnImport">@Loc["ui.save.load"]</button>
-                            <button @onclick="() => _showImport = false">@Loc["ui.save.cancel"]</button>
+                            <button @onclick="ClosePanel">@Loc["ui.save.cancel"]</button>
                         </div>
                         @if (!string.IsNullOrEmpty(_importError))
                         {
@@ -67,10 +87,16 @@
     [Parameter] public EventCallback OnStateChanged { get; set; }
 
     private bool _open;
-    private bool _showImport;
+    // Save data has one expandable panel shared by export and import — only one
+    // is shown at a time, keeping the two flows symmetric (both reveal the same
+    // textarea + action buttons in place rather than one copying silently).
+    private SavePanel _panel = SavePanel.None;
     private string _importText = "";
+    private string _exportText = "";
     private string? _importError;
     private string? _toast;
+
+    private enum SavePanel { None, Export, Import }
 
     // The modal lives inside its own component boundary, so a language switch made
     // from the LanguageSelect within it re-renders that child (and Home) but not
@@ -93,7 +119,7 @@
     private void Close()
     {
         _open = false;
-        _showImport = false;
+        _panel = SavePanel.None;
         _importError = null;
     }
 
@@ -103,12 +129,22 @@
         FlashToast(Loc["ui.save.saved"]);
     }
 
-    private async Task OnExport()
+    // Export mirrors import: expanding the panel fills the textarea with the
+    // export string so the player can eyeball / copy / download it, rather than
+    // silently pushing to the clipboard.
+    private void ToggleExport()
     {
-        var s = Save.Export();
+        if (_panel == SavePanel.Export) { ClosePanel(); return; }
+        _exportText = Save.Export();
+        _importError = null;
+        _panel = SavePanel.Export;
+    }
+
+    private async Task OnCopyExport()
+    {
         try
         {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", s);
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _exportText);
             FlashToast(Loc["ui.save.exported"]);
         }
         catch
@@ -117,7 +153,50 @@
         }
     }
 
-    private void ToggleImport() => _showImport = !_showImport;
+    // Same export string as the clipboard channel, handed to a tiny JS helper
+    // that Blob-downloads it. Filename carries a local-time stamp so repeated
+    // exports don't overwrite one another.
+    private async Task OnExportFile()
+    {
+        var name = $"cookie-clicker-save-{DateTime.Now:yyyyMMdd-HHmmss}.txt";
+        await JS.InvokeVoidAsync("cookieClicker.downloadTextFile", name, _exportText);
+        FlashToast(Loc["ui.save.exported_file"]);
+    }
+
+    // File import reads the picked file to a string and funnels into the very
+    // same ImportAsync as the paste flow, so validation and error reporting are
+    // shared. 2MB cap is a generous safety ceiling — real saves are a few KB.
+    private async Task OnImportFile(InputFileChangeEventArgs e)
+    {
+        _importError = null;
+        try
+        {
+            using var reader = new StreamReader(e.File.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024));
+            var content = await reader.ReadToEndAsync();
+            await Save.ImportAsync(content);
+            ClosePanel();
+            _importText = "";
+            await OnStateChanged.InvokeAsync();
+            FlashToast(Loc["ui.save.loaded"]);
+        }
+        catch (Exception ex)
+        {
+            _importError = Loc.Format("ui.save.import_error", ex.Message);
+        }
+    }
+
+    private void ToggleImport()
+    {
+        if (_panel == SavePanel.Import) { ClosePanel(); return; }
+        _importError = null;
+        _panel = SavePanel.Import;
+    }
+
+    private void ClosePanel()
+    {
+        _panel = SavePanel.None;
+        _importError = null;
+    }
 
     private async Task OnImport()
     {
@@ -125,7 +204,7 @@
         try
         {
             await Save.ImportAsync(_importText);
-            _showImport = false;
+            ClosePanel();
             _importText = "";
             await OnStateChanged.InvokeAsync();
             FlashToast(Loc["ui.save.loaded"]);
