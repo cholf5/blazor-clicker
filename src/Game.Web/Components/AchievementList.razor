@@ -35,6 +35,7 @@
         {
             var unlocked = State.UnlockedAchievements.Contains(ach.Id);
             <div class="achievement-tile @(unlocked ? "unlocked" : "locked")"
+                 @key="ach.Id"
                  @ref="_tiles[ach.Id]"
                  @onmouseover="() => ShowTooltip(ach, unlocked)"
                  @onmouseout="Tooltip.Hide">
@@ -58,7 +59,22 @@
             ? Achievements.All
             : Achievements.All.Where(a => _selected.Matches(a.Id));
 
-    private void Select(AchievementCategory? category) => _selected = category;
+    private void Select(AchievementCategory? category)
+    {
+        _selected = category;
+
+        // The visible set swaps with the tab, so drop element refs for
+        // achievements that are no longer shown. Left in place they'd be stale
+        // (detached DOM) — harmless today because ShowTooltip only reads refs
+        // for visible tiles, but a future reorder/filter would let a stale ref
+        // anchor the tooltip to nothing and send it to the corner. Keeping the
+        // dictionary tight matches UpgradeStore and the anchor contract.
+        var live = VisibleAchievements.Select(a => a.Id).ToHashSet();
+        foreach (var id in _tiles.Keys.Where(k => !live.Contains(k)).ToList())
+        {
+            _tiles.Remove(id);
+        }
+    }
 
     private int CountIn(AchievementCategory category) =>
         Achievements.All.Count(a => category.Matches(a.Id));
