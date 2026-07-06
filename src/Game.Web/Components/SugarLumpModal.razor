@@ -1,0 +1,58 @@
+@* Sugar-lump allocation modal (ADR 0006). Lists every unlocked building with its
+   current sugar-lump level and a button to invest one level. Cost is triangular
+   (reaching level N costs N lumps), so "which building do I feed?" is a real
+   decision when lumps are scarce. All data comes from Buildings.All + GameState;
+   no per-building hard-coding. *@
+
+@using Game.Core.Data
+@inject AudioService Audio
+@inject ILocalizer Loc
+
+@if (Open)
+{
+    <div class="sugar-backdrop" @onclick="Close">
+        <div class="sugar-dialog" @onclick:stopPropagation="true">
+            <div class="sugar-dialog-header">
+                <h2>@Loc["ui.sugar.modal_title"]</h2>
+                <button class="sugar-dialog-close" @onclick="Close" title="@Loc["ui.options.close"]">✕</button>
+            </div>
+
+            <p class="sugar-modal-balance">
+                🍬 @Loc.Format("ui.sugar.balance", State.SugarLumps)
+            </p>
+            <p class="sugar-modal-hint">@Loc.Format("ui.sugar.modal_hint", (ProgressionConfig.SugarLumpBuildingLevelBonus * 100).ToString("0.#"))</p>
+
+            <div class="sugar-modal-list">
+                @foreach (var b in Buildings.All.Where(b => State.IsBuildingUnlocked(b.Id)))
+                {
+                    var level = State.BuildingLevels.GetValueOrDefault(b.Id);
+                    var cost = State.BuildingLevelUpCost(b.Id);
+                    var affordable = State.SugarLumps >= cost;
+                    <div class="sugar-modal-row">
+                        <span class="sugar-modal-emoji">@b.Icon</span>
+                        <span class="sugar-modal-name">@b.DisplayName(Loc)</span>
+                        <span class="sugar-modal-level">@Loc.Format("ui.sugar.level", level)</span>
+                        <button class="sugar-modal-buy" disabled="@(!affordable)"
+                                @onclick="() => LevelUp(b.Id)"
+                                title="@Loc.Format("ui.sugar.levelup_title", cost)">
+                            @Loc.Format("ui.sugar.levelup", cost)
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private void LevelUp(BuildingId id)
+    {
+        if (State.LevelUpBuilding(id)) Audio.PlayPurchase();
+    }
+
+    private Task Close() => OnClose.InvokeAsync();
+}

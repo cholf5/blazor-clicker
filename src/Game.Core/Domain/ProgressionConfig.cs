@@ -8,14 +8,21 @@ public static class ProgressionConfig
 {
     // ---- Sugar lumps -------------------------------------------------------
     /// <summary>
-    /// Wall-clock seconds a fresh sugar lump takes to ripen. Cookie Clicker
-    /// canonical value is 23 hours; we shorten it since this fan remake is
-    /// intended for shorter sessions.
+    /// Wall-clock seconds a fresh sugar lump takes to ripen. Aligned with Cookie
+    /// Clicker's canonical value (~23 hours) rather than a shortened one: per
+    /// ADR 0006, sugar lumps are a <b>flavour</b> system, not a growth source, and
+    /// the ripen time is the primary lever that keeps their magnitude tiny. A ~1/day
+    /// cadence makes each lump scarce enough that "which building do I feed?" is a
+    /// real decision. See ADR 0006 §2–§3 for why the earlier 30-minute value was wrong.
     /// </summary>
-    public const double SugarLumpRipenSeconds = 30 * 60; // 30 minutes
+    public const double SugarLumpRipenSeconds = 24 * 60 * 60; // 24 hours (~1 per day)
 
-    /// <summary>Extra CPS multiplier granted per sugar lump harvested (multiplicative on top of raw CPS).</summary>
-    public const double SugarLumpCpsBonus = 0.01; // +1% per lump
+    /// <summary>
+    /// CPS bonus granted per sugar-lump level spent on a building, additive within
+    /// that single building (level 10 == that building ×1.10). Does <b>not</b> touch
+    /// the global multiplier — see <see cref="GameState.GetBuildingUnitCps"/>.
+    /// </summary>
+    public const double SugarLumpBuildingLevelBonus = 0.01; // +1% per level, per building
 
     /// <summary>Total cookies baked (in the current run) required before the first sugar lump seed even appears.</summary>
     public const double SugarLumpUnlockThreshold = 1_000_000_000; // 1 billion

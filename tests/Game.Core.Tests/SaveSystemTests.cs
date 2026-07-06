@@ -155,6 +155,43 @@ public class SaveSystemTests
         Assert.Equal(Game.Core.Localization.Language.TraditionalChinese, loaded.ChosenLanguage);
     }
 
+    [Fact]
+    public void Migrate_V4Save_KeepsSugarLumpsAsBalanceAndEmptyBuildingLevels()
+    {
+        // A v4 save's SugarLumps counted "harvested lumps = +1% global each".
+        // v5 reinterprets the same number as an unspent balance (strategy A),
+        // so the player loses nothing and BuildingLevels starts empty.
+        var v4Json = """
+        {
+          "Version": 4,
+          "Cookies": 10,
+          "TotalCookiesBaked": 10,
+          "AllTimeCookiesBaked": 10,
+          "SugarLumps": 7,
+          "BuildingCounts": {},
+          "PurchasedUpgrades": [],
+          "UnlockedAchievements": []
+        }
+        """;
+
+        var state = SaveSystem.DeserializeFromJson(v4Json);
+        Assert.Equal(7, state.SugarLumps);
+        Assert.Empty(state.BuildingLevels);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesBuildingLevels()
+    {
+        var s = new GameState();
+        typeof(GameState).GetProperty("SugarLumps")!.SetValue(s, 10L);
+        s.LevelUpBuilding(BuildingId.Grandma);
+        s.LevelUpBuilding(BuildingId.Grandma);
+        var json = SaveSystem.SerializeToJson(s);
+        var loaded = SaveSystem.DeserializeFromJson(json);
+        Assert.Equal(2, loaded.BuildingLevels[BuildingId.Grandma]);
+        Assert.Equal(s.SugarLumps, loaded.SugarLumps);
+    }
+
     // Expose ToSaveData for the test above without changing production visibility.
 }
 

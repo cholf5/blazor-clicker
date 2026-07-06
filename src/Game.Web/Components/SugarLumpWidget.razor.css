@@ -92,6 +92,25 @@
     line-height: 1.35;
 }
 
+.sugar-lump-spend {
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px 12px;
+    border: none;
+    border-radius: 7px;
+    background: #4a3822;
+    color: #ffd9a7;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px #8a6a3f;
+    transition: background 80ms ease;
+}
+
+.sugar-lump-spend:hover {
+    background: #5c4629;
+}
+
 @keyframes sugar-glow {
     from { box-shadow: 0 3px 0 #7a3f10, 0 6px 12px rgba(255, 190, 90, 0.35); }
     to   { box-shadow: 0 3px 0 #7a3f10, 0 6px 22px rgba(255, 220, 120, 0.85); }

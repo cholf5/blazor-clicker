@@ -60,6 +60,8 @@ public static class TranslationsEn
         ["ui.building.total_from"] = "Total from these",
         ["ui.building.share"] = "Share of your cps",
         ["ui.building.pays_for"] = "Pays for itself in",
+        ["ui.building.sugar_level"] = "Sugar level",
+        ["ui.building.sugar_level_value"] = "Lv {0} (+{1}%)",
         ["ui.unit.cps"] = "{0} cps",
 
         // ---- Upgrade store --------------------------------------------------
@@ -124,8 +126,22 @@ public static class TranslationsEn
         ["ui.sugar.harvest"] = "Harvest ripe lump",
         ["ui.sugar.harvest_title"] = "Harvest this sugar lump",
         ["ui.sugar.growing"] = "Growing… {0}",
-        ["ui.sugar.blurb"] = "Each lump grants a permanent +{0}% CPS bonus.",
-        ["ui.sugar.next_tooltip"] = "Next lump ripens in {0}. Sugar lumps are permanent CPS bonuses.",
+        ["ui.sugar.blurb"] = "Spend lumps to level up buildings: +{0}% output each, for that building.",
+        ["ui.sugar.next_tooltip"] = "Next lump ripens in {0}. Spend lumps to level up buildings.",
+        ["ui.sugar.spend"] = "Spend on buildings",
+        ["ui.sugar.spend_title"] = "Invest sugar lumps into building levels",
+        ["ui.sugar.modal_title"] = "Spend sugar lumps",
+        ["ui.sugar.modal_hint"] = "Each level adds +{0}% to that building's output. Reaching level N costs N lumps.",
+        ["ui.sugar.balance"] = "{0} available",
+        ["ui.sugar.level"] = "Lv {0}",
+        ["ui.sugar.levelup"] = "Level up ({0} 🍬)",
+        ["ui.sugar.levelup_title"] = "Spend {0} sugar lumps to add +1% to this building",
+        ["ui.sugar.tip_balance"] = "Unspent",
+        ["ui.sugar.tip_ripen"] = "Ripens every",
+        ["ui.sugar.tip_ripen_value"] = "~{0} h (one at a time)",
+        ["ui.sugar.tip_effect"] = "Each level",
+        ["ui.sugar.tip_effect_value"] = "+{0}% to one building",
+        ["ui.sugar.tip_how"] = "A slow-growing currency. Harvest ripe lumps, then click \"Spend on buildings\" to invest them: each level permanently boosts that one building's output.",
 
         // ---- Ascend panel ---------------------------------------------------
         ["ui.ascend.title"] = "Ascension",

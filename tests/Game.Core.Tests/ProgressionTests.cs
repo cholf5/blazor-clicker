@@ -58,18 +58,69 @@ public class ProgressionTests
     }
 
     [Fact]
-    public void SugarLumps_BoostCps()
+    public void BuildingLevels_BoostOnlyThatBuilding()
+    {
+        var s = new GameState { Cookies = 1_000_000 };
+        s.BuyBuilding(BuildingId.Grandma);
+        s.BuyBuilding(BuildingId.Farm);
+        var grandmaBefore = s.GetBuildingUnitCps(BuildingId.Grandma);
+        var farmBefore = s.GetBuildingUnitCps(BuildingId.Farm);
+
+        // Invest 10 levels into Grandma via reflection on the balance + method.
+        typeof(GameState).GetProperty("SugarLumps")!.SetValue(s, 1000L);
+        for (var i = 0; i < 10; i++)
+            Assert.True(s.LevelUpBuilding(BuildingId.Grandma));
+
+        Assert.Equal(10, s.BuildingLevels[BuildingId.Grandma]);
+        // Grandma gains exactly +10% (additive, per ADR 0006), Farm is untouched.
+        Assert.Equal(grandmaBefore * 1.10, s.GetBuildingUnitCps(BuildingId.Grandma), 6);
+        Assert.Equal(farmBefore, s.GetBuildingUnitCps(BuildingId.Farm), 6);
+    }
+
+    [Fact]
+    public void LevelUpBuilding_TriangularCostAndBalanceGuard()
+    {
+        var s = new GameState();
+        typeof(GameState).GetProperty("SugarLumps")!.SetValue(s, 3L);
+
+        // Reaching level N costs N lumps: 1 + 2 = 3 lumps buys two levels, then broke.
+        Assert.Equal(1, s.BuildingLevelUpCost(BuildingId.Cursor));
+        Assert.True(s.LevelUpBuilding(BuildingId.Cursor));   // spent 1, balance 2
+        Assert.Equal(2, s.BuildingLevelUpCost(BuildingId.Cursor));
+        Assert.True(s.LevelUpBuilding(BuildingId.Cursor));   // spent 2, balance 0
+        Assert.Equal(0, s.SugarLumps);
+        Assert.Equal(3, s.BuildingLevelUpCost(BuildingId.Cursor));
+        Assert.False(s.LevelUpBuilding(BuildingId.Cursor));  // can't afford
+        Assert.Equal(2, s.BuildingLevels[BuildingId.Cursor]);
+    }
+
+    [Fact]
+    public void SugarLumps_NoLongerBoostGlobalCps()
     {
         var s = new GameState { Cookies = 10_000 };
         s.BuyBuilding(BuildingId.Grandma);
         var baseCps = s.CurrentCpsRaw();
 
-        // Grant 5 sugar lumps via reflection since the intended path is player harvest.
+        // A balance of unspent lumps does nothing until invested in a building.
         typeof(GameState).GetProperty("SugarLumps")!.SetValue(s, 5L);
-        var boostedCps = s.CurrentCpsRaw();
+        Assert.Equal(baseCps, s.CurrentCpsRaw(), 6);
+    }
 
-        var expected = baseCps * (1 + 5 * ProgressionConfig.SugarLumpCpsBonus);
-        Assert.Equal(expected, boostedCps, 6);
+    [Fact]
+    public void SugarLumpsUnlocked_TracksThresholdBalanceAndLevels()
+    {
+        var s = new GameState();
+        Assert.False(s.SugarLumpsUnlocked);
+
+        // Crossing the baked threshold reveals it.
+        typeof(GameState).GetProperty("AllTimeCookiesBaked")!
+            .SetValue(s, ProgressionConfig.SugarLumpUnlockThreshold + 1);
+        Assert.True(s.SugarLumpsUnlocked);
+
+        // A balance alone (e.g. a migrated save below the threshold) also reveals it.
+        var s2 = new GameState();
+        typeof(GameState).GetProperty("SugarLumps")!.SetValue(s2, 3L);
+        Assert.True(s2.SugarLumpsUnlocked);
     }
 
     // ------------------------------------------------------------------

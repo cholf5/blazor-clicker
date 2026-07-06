@@ -44,12 +44,22 @@ public sealed class GameState
     public List<ActiveBuff> Buffs { get; private set; } = new();
 
     // ---- Sugar lumps ----
-    /// <summary>Total sugar lumps harvested over the lifetime of this save.</summary>
+    /// <summary>
+    /// Unspent sugar lumps available to invest in building levels. (Prior to
+    /// ADR 0006 this counted lumps as a permanent +1% global bonus; it is now a
+    /// spendable balance — see the v4→v5 migration.)
+    /// </summary>
     public long SugarLumps { get; private set; }
     /// <summary>Whether an unharvested sugar lump is currently ripe (waiting for the player to click).</summary>
     public bool SugarLumpReady { get; private set; }
     /// <summary>Game time (seconds) at which the next sugar lump will ripen. Used only when not already ripe.</summary>
     public double SugarLumpNextAt { get; private set; }
+    /// <summary>
+    /// Sugar-lump levels invested into each building. Each level adds +1% to that
+    /// building's own production (see <see cref="GetBuildingUnitCps"/>). Levels are
+    /// permanent meta progress — they survive ascension, like sugar lumps themselves.
+    /// </summary>
+    public Dictionary<BuildingId, int> BuildingLevels { get; private set; } = new();
 
     // ---- Prestige / ascension ----
     /// <summary>Number of heavenly / prestige levels this save has accumulated across every ascension.</summary>
@@ -261,7 +271,7 @@ public sealed class GameState
         return effect;
     }
 
-    /// <summary>Harvest a ripe sugar lump. Returns true if one was actually harvested.</summary>
+    /// <summary>Harvest a ripe sugar lump into the spendable balance. Returns true if one was actually harvested.</summary>
     public bool HarvestSugarLump()
     {
         if (!SugarLumpReady) return false;
@@ -269,6 +279,40 @@ public sealed class GameState
         SugarLumps++;
         SugarLumpNextAt = GameTime + ProgressionConfig.SugarLumpRipenSeconds;
         _newsMessages.Enqueue(NewsMessage.Of("news.event.harvest", SugarLumps));
+        return true;
+    }
+
+    /// <summary>
+    /// Whether the sugar-lump system has revealed itself to the player yet. Mirrors
+    /// the widget's own visibility rule so the UI can decide, uniformly, when to
+    /// surface sugar-lump info (e.g. a "Sugar level" row on every building tooltip,
+    /// showing Lv 0 for un-invested ones) rather than only for buildings that
+    /// happen to already have levels.
+    /// </summary>
+    public bool SugarLumpsUnlocked =>
+        AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold
+        || SugarLumps > 0
+        || BuildingLevels.Count > 0;
+
+    /// <summary>
+    /// Sugar-lump cost to raise <paramref name="id"/> from its current level to the
+    /// next one. Cost equals the target level (Cookie Clicker's triangular pricing:
+    /// reaching level N costs 1+2+…+N lumps), so high levels get expensive fast —
+    /// this, not the ripen time, is what bounds a single building's investment.
+    /// </summary>
+    public long BuildingLevelUpCost(BuildingId id) =>
+        BuildingLevels.GetValueOrDefault(id) + 1;
+
+    /// <summary>
+    /// Spend sugar lumps to raise a building's level by one. Returns true on success,
+    /// false if the balance can't cover <see cref="BuildingLevelUpCost"/>.
+    /// </summary>
+    public bool LevelUpBuilding(BuildingId id)
+    {
+        var cost = BuildingLevelUpCost(id);
+        if (SugarLumps < cost) return false;
+        SugarLumps -= cost;
+        BuildingLevels[id] = BuildingLevels.GetValueOrDefault(id) + 1;
         return true;
     }
 
@@ -284,7 +328,7 @@ public sealed class GameState
 
     /// <summary>
     /// Reset the current run in exchange for prestige levels. Keeps achievements,
-    /// sugar lumps, prestige, and life-time counters.
+    /// sugar lumps (balance + invested building levels), prestige, and life-time counters.
     /// </summary>
     public bool Ascend()
     {
@@ -362,11 +406,12 @@ public sealed class GameState
                 globalMult *= 1 + milk * up.EffectValue;
         }
 
-        // Prestige & sugar lumps stack additively as a "% bonus", then apply
-        // multiplicatively to the whole economy so late-game growth remains large.
+        // Prestige stacks additively as a "% bonus", then applies multiplicatively
+        // to the whole economy so late-game growth remains large. Sugar lumps are
+        // deliberately NOT here: per ADR 0006 they boost a single building each
+        // (see GetBuildingUnitCps), which keeps their aggregate magnitude tiny.
         var permanentBonus = 1.0
-            + PrestigeLevel * ProgressionConfig.PrestigeCpsBonus
-            + SugarLumps * ProgressionConfig.SugarLumpCpsBonus;
+            + PrestigeLevel * ProgressionConfig.PrestigeCpsBonus;
 
         return total * globalMult * permanentBonus;
     }
@@ -455,6 +500,13 @@ public sealed class GameState
             if (up.EffectKind == UpgradeEffectKind.BuildingMultiplier && up.TargetBuilding == id)
                 mult *= up.EffectValue;
         }
+
+        // Sugar-lump levels invested in this building add +1% each, additively,
+        // and only to this building (ADR 0006). This is why sugar lumps stay a
+        // flavour bonus rather than a growth axis.
+        var level = BuildingLevels.GetValueOrDefault(id);
+        if (level > 0)
+            mult *= 1.0 + level * ProgressionConfig.SugarLumpBuildingLevelBonus;
 
         return baseCps * mult;
     }
@@ -628,6 +680,7 @@ public sealed class GameState
         SugarLumpNextAt = data.SugarLumpNextAt > 0
             ? data.SugarLumpNextAt
             : GameTime + ProgressionConfig.SugarLumpRipenSeconds;
+        BuildingLevels = data.BuildingLevels.ToDictionary(k => k.Key, k => k.Value);
         PrestigeLevel = data.PrestigeLevel;
         ChosenLanguage = data.Language;
     }
@@ -652,6 +705,7 @@ public sealed class GameState
         SugarLumps = SugarLumps,
         SugarLumpReady = SugarLumpReady,
         SugarLumpNextAt = SugarLumpNextAt,
+        BuildingLevels = BuildingLevels.ToDictionary(k => k.Key, k => k.Value),
         PrestigeLevel = PrestigeLevel,
         Language = ChosenLanguage,
     };

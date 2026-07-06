@@ -58,6 +58,8 @@ public static class TranslationsZhHant
         ["ui.building.total_from"] = "此類總產出",
         ["ui.building.share"] = "佔你 cps 的比例",
         ["ui.building.pays_for"] = "回本所需時間",
+        ["ui.building.sugar_level"] = "糖塊等級",
+        ["ui.building.sugar_level_value"] = "Lv {0}（+{1}%）",
         ["ui.unit.cps"] = "{0} cps",
 
         // ---- Upgrade store --------------------------------------------------
@@ -122,8 +124,22 @@ public static class TranslationsZhHant
         ["ui.sugar.harvest"] = "收穫成熟糖塊",
         ["ui.sugar.harvest_title"] = "收穫這塊糖塊",
         ["ui.sugar.growing"] = "生長中… {0}",
-        ["ui.sugar.blurb"] = "每塊糖塊提供永久 +{0}% CPS 加成。",
-        ["ui.sugar.next_tooltip"] = "下一塊糖塊將在 {0} 後成熟。糖塊提供永久 CPS 加成。",
+        ["ui.sugar.blurb"] = "花糖塊給建築升級：每級為該建築 +{0}% 產出。",
+        ["ui.sugar.next_tooltip"] = "下一塊糖塊將在 {0} 後成熟。花糖塊給建築升級。",
+        ["ui.sugar.spend"] = "投給建築",
+        ["ui.sugar.spend_title"] = "把糖塊投給建築升級",
+        ["ui.sugar.modal_title"] = "花費糖塊",
+        ["ui.sugar.modal_hint"] = "每級為該建築 +{0}% 產出。升到第 N 級需花 N 塊糖塊。",
+        ["ui.sugar.balance"] = "可用 {0} 塊",
+        ["ui.sugar.level"] = "Lv {0}",
+        ["ui.sugar.levelup"] = "升級（{0} 🍬）",
+        ["ui.sugar.levelup_title"] = "花 {0} 塊糖塊給該建築 +1% 產出",
+        ["ui.sugar.tip_balance"] = "未花費",
+        ["ui.sugar.tip_ripen"] = "成熟週期",
+        ["ui.sugar.tip_ripen_value"] = "約 {0} 小時（一次一塊）",
+        ["ui.sugar.tip_effect"] = "每級效果",
+        ["ui.sugar.tip_effect_value"] = "+{0}% 單個建築產出",
+        ["ui.sugar.tip_how"] = "一種緩慢成長的貨幣。收穫成熟的糖塊後，點「投給建築」把它投出去：每一級永久提升該建築的產出。",
 
         // ---- Ascend panel ---------------------------------------------------
         ["ui.ascend.title"] = "轉生",

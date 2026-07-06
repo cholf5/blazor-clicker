@@ -84,26 +84,43 @@ else
         var unitCps = State.GetBuildingUnitCps(Definition.Id);
         var totalCps = unitCps * owned;
 
+        // Each tooltip row gets a leading emoji as a visual bullet. This keeps the
+        // 🍬 sugar-level row from looking like a lone special case (the reason we
+        // added icons at all — it was hard to spot buried in plain text) while
+        // making the whole card easier to scan. Prefixing here rather than in the
+        // translation strings keeps the same keys reusable by upgrade/achievement
+        // tooltips without inheriting building-specific icons.
         var rows = new List<(string, string)>
         {
-            (Loc["ui.building.owned"], owned.ToString()),
-            (Loc["ui.building.each_produces"], Loc.Format("ui.unit.cps", NumberFormat.Format(unitCps))),
+            ($"👛 {Loc["ui.building.owned"]}", owned.ToString()),
+            ($"⚡ {Loc["ui.building.each_produces"]}", Loc.Format("ui.unit.cps", NumberFormat.Format(unitCps))),
         };
+
+        // Once sugar lumps are unlocked, show the level row on EVERY building so
+        // the tooltip layout stays consistent — un-invested buildings read Lv 0
+        // rather than the row appearing and disappearing per building.
+        if (State.SugarLumpsUnlocked)
+        {
+            var sugarLevel = State.BuildingLevels.GetValueOrDefault(Definition.Id);
+            var bonusPct = sugarLevel * ProgressionConfig.SugarLumpBuildingLevelBonus * 100;
+            rows.Add(($"🍬 {Loc["ui.building.sugar_level"]}",
+                Loc.Format("ui.building.sugar_level_value", sugarLevel, bonusPct.ToString("0.#"))));
+        }
 
         if (owned > 0)
         {
-            rows.Add((Loc["ui.building.total_from"], Loc.Format("ui.unit.cps", NumberFormat.Format(totalCps))));
+            rows.Add(($"📊 {Loc["ui.building.total_from"]}", Loc.Format("ui.unit.cps", NumberFormat.Format(totalCps))));
             var share = State.BuildingCpsShare(Definition.Id);
             if (share > 0)
             {
-                rows.Add((Loc["ui.building.share"], $"{share * 100:0.#}%"));
+                rows.Add(($"🥧 {Loc["ui.building.share"]}", $"{share * 100:0.#}%"));
             }
         }
 
         // How long one copy takes to pay for itself from its own output.
         if (unitCps > 0)
         {
-            rows.Add((Loc["ui.building.pays_for"], FormatSeconds(unitCost / unitCps)));
+            rows.Add(($"⏱ {Loc["ui.building.pays_for"]}", FormatSeconds(unitCost / unitCps)));
         }
 
         var costValue = NumberFormat.Format(BulkAmount > 1 ? State.BulkBuildingCost(Definition.Id, BulkAmount) : unitCost)

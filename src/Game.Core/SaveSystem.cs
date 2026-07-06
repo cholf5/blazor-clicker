@@ -15,7 +15,7 @@ namespace Game.Core;
 /// </summary>
 public static class SaveSystem
 {
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -115,6 +115,16 @@ public static class SaveSystem
                     // leaving Language null makes old saves follow the system language,
                     // which is exactly the "never chosen" behaviour we want.
                     data.Version = 4;
+                    break;
+
+                case 4:
+                    // v4 → v5: sugar lumps became spendable (ADR 0006). The stored
+                    // SugarLumps count changes meaning from "each = permanent +1%
+                    // global" to "unspent balance". We keep the number as-is so the
+                    // player loses nothing — they just re-invest it into buildings.
+                    // BuildingLevels defaults to empty.
+                    data.BuildingLevels ??= new();
+                    data.Version = 5;
                     break;
 
                 default:

@@ -1,14 +1,19 @@
 @* A small widget shown once the player has baked enough cookies to
-   unlock sugar lumps. Displays the current stockpile, a growth progress
-   bar, and a big harvest button that lights up when ripe. *@
+   unlock sugar lumps. Shows the growth progress bar, a big harvest button
+   when ripe, the unspent balance, and an entry point to the allocation modal
+   where lumps are invested into building levels (ADR 0006). *@
 
 @inject AudioService Audio
 @inject ILocalizer Loc
+@inject TooltipService Tooltip
 
 @if (Show)
 {
     <section class="sugar-lump">
-        <header class="sugar-lump-header">
+        <header class="sugar-lump-header"
+                @ref="_header"
+                @onmouseover="ShowInfoTooltip"
+                @onmouseout="Tooltip.Hide">
             <h3>@Loc["ui.sugar.title"]</h3>
             <span class="sugar-lump-count">🍬 @State.SugarLumps</span>
         </header>
@@ -28,12 +33,21 @@
             </div>
         }
 
-        <p class="sugar-lump-blurb">@Loc.Format("ui.sugar.blurb", (ProgressionConfig.SugarLumpCpsBonus * 100).ToString("0.#"))</p>
+        <button class="sugar-lump-spend" @onclick="OpenModal" title="@Loc["ui.sugar.spend_title"]">
+            🏗 @Loc["ui.sugar.spend"]
+        </button>
+
+        <p class="sugar-lump-blurb">@Loc.Format("ui.sugar.blurb", (ProgressionConfig.SugarLumpBuildingLevelBonus * 100).ToString("0.#"))</p>
     </section>
+
+    <SugarLumpModal State="State" Open="_modalOpen" OnClose="CloseModal" />
 }
 
 @code {
     [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private bool _modalOpen;
+    private ElementReference _header;
 
     private double Progress
     {
@@ -50,8 +64,10 @@
         get
         {
             var remaining = Math.Max(0, State.SugarLumpNextAt - State.GameTime);
-            var mins = (int)(remaining / 60);
+            var hours = (int)(remaining / 3600);
+            var mins = (int)(remaining % 3600 / 60);
             var secs = (int)(remaining % 60);
+            if (hours > 0) return $"{hours}h {mins:00}m";
             return mins > 0 ? $"{mins}m {secs:00}s" : $"{secs}s";
         }
     }
@@ -59,12 +75,34 @@
     private string TooltipText =>
         Loc.Format("ui.sugar.next_tooltip", RemainingText);
 
-    private bool Show =>
-        State.AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold
-        || State.SugarLumps > 0;
+    private bool Show => State.SugarLumpsUnlocked;
+
+    private void ShowInfoTooltip() => Tooltip.Show(BuildInfoTooltip, _header);
+
+    // Rich explainer for the balance: what lumps are, how long they take to grow,
+    // what they do, and — the bit players hunt for — how to actually spend them.
+    private RenderFragment BuildInfoTooltip()
+    {
+        var ripenHours = (ProgressionConfig.SugarLumpRipenSeconds / 3600).ToString("0.#");
+        var perLevel = (ProgressionConfig.SugarLumpBuildingLevelBonus * 100).ToString("0.#");
+        var rows = new List<(string, string)>
+        {
+            (Loc["ui.sugar.tip_balance"], State.SugarLumps.ToString()),
+            (Loc["ui.sugar.tip_ripen"], Loc.Format("ui.sugar.tip_ripen_value", ripenHours)),
+            (Loc["ui.sugar.tip_effect"], Loc.Format("ui.sugar.tip_effect_value", perLevel)),
+        };
+        return @<TooltipCard Icon="🍬"
+                             Title="@Loc["ui.sugar.title"]"
+                             CssClass="building"
+                             Rows="rows"
+                             Flavor="@Loc["ui.sugar.tip_how"]" />;
+    }
 
     private void Harvest()
     {
         if (State.HarvestSugarLump()) Audio.PlayAchievement();
     }
+
+    private void OpenModal() => _modalOpen = true;
+    private void CloseModal() => _modalOpen = false;
 }

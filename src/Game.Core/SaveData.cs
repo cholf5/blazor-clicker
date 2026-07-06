@@ -22,8 +22,13 @@ public sealed class SaveData
     /// * v4 — added the player's chosen display language. Nullable: null means
     ///   "never chosen" (follow the system/browser language), a value means the
     ///   player picked it explicitly. Older saves migrate to null.
+    /// * v5 — sugar lumps became spendable. <see cref="SugarLumps"/> changed
+    ///   meaning from "lumps harvested = permanent +1% global each" to "unspent
+    ///   balance", and <see cref="BuildingLevels"/> was added (levels bought with
+    ///   lumps, +1% per level to that one building). Older saves keep their lump
+    ///   count as the starting balance and default BuildingLevels to empty.
     /// </summary>
-    public int Version { get; set; } = 4;
+    public int Version { get; set; } = 5;
 
     // ---- v1 fields ---------------------------------------------------------
     public double Cookies { get; set; }
@@ -48,7 +53,12 @@ public sealed class SaveData
     /// <summary>Prestige levels accumulated across all ascensions.</summary>
     public int PrestigeLevel { get; set; }
 
-    /// <summary>Total sugar lumps harvested over the lifetime of this save.</summary>
+    /// <summary>
+    /// Unspent sugar lumps. Up to and including v4 this counted lumps harvested and
+    /// each granted a permanent +1% global CPS bonus; from v5 it is a spendable
+    /// balance (see <see cref="BuildingLevels"/>). The v4→v5 migration keeps the
+    /// stored number as the opening balance.
+    /// </summary>
     public long SugarLumps { get; set; }
 
     /// <summary>Whether a sugar lump is currently ripe and waiting to be harvested.</summary>
@@ -76,4 +86,11 @@ public sealed class SaveData
     /// browser language. Null on saves that pre-date v4.
     /// </summary>
     public Language? Language { get; set; }
+
+    // ---- v5 additions ------------------------------------------------------
+    /// <summary>
+    /// Sugar-lump levels invested per building (+1% production each, to that
+    /// building only). Empty on saves that pre-date v5.
+    /// </summary>
+    public Dictionary<BuildingId, int> BuildingLevels { get; set; } = new();
 }
