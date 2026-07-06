@@ -39,6 +39,10 @@ coverage/
 cookieclicker/
 cookieclicker-*/
 
+# --- Source capture footage (screenshots/GIFs are committed, the raw clip is not) ---
+demo.mp4
+*.mov
+
 # --- OS ---
 Thumbs.db
 ehthumbs.db
