@@ -20,6 +20,25 @@
     place-items: center;
 }
 
+/* Stationary, invisible hit target for the tooltip. It's a donut covering the
+   finger band (inner rings ≈8.5rem out to outer ≈12.5rem) with a hollow centre
+   the size of the cookie, punched out via a radial-gradient mask so clicks fall
+   straight through to the big cookie. Being fixed (outside the spinner), its
+   bounding rect is constant, so the tooltip anchors here and never chases the
+   rotating fingers — the bug that killed the original ring tooltip. */
+.cursor-ring-hit {
+    position: absolute;
+    width: 26rem;
+    height: 26rem;
+    border-radius: 50%;
+    pointer-events: auto;
+    cursor: help;
+    /* Hollow out the central cookie-sized disc: transparent (masked-out, so no
+       pointer events) inside 7.5rem, opaque (hit-testable) beyond it. */
+    -webkit-mask: radial-gradient(circle at center, transparent 7.5rem, #000 7.5rem);
+    mask: radial-gradient(circle at center, transparent 7.5rem, #000 7.5rem);
+}
+
 .cursor-finger {
     position: absolute;
     /* Anchor the finger box on the ring centre, then rotate to its angle and
@@ -34,7 +53,11 @@
     top: 50%;
     transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--radius)));
     transform-origin: center;
-    pointer-events: auto;
+    /* The stationary .cursor-ring-hit handles all hover now. Fingers must NOT
+       take pointer events: as they rotate over the cursor they'd otherwise steal
+       the hover from the hit ring, firing mouseout and making the tooltip flicker
+       (and the old finger-as-anchor bug is exactly what the hit ring replaced). */
+    pointer-events: none;
     width: 1.4rem;
     height: 2.3rem;
 }
@@ -106,5 +129,14 @@
         transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-0.66 * var(--radius)));
         width: 1rem;
         height: 1.6rem;
+    }
+
+    /* Shrink the hit donut with the ring and move the hollow centre in to the
+       10rem cookie's 5rem radius, so clicks still fall through to the cookie. */
+    .cursor-ring-hit {
+        width: 17rem;
+        height: 17rem;
+        -webkit-mask: radial-gradient(circle at center, transparent 5rem, #000 5rem);
+        mask: radial-gradient(circle at center, transparent 5rem, #000 5rem);
     }
 }

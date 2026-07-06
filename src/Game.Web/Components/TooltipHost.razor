@@ -40,7 +40,7 @@
         if (_needsReposition && Ts.Visible)
         {
             _needsReposition = false;
-            try { await Js.InvokeVoidAsync("cookieClicker.positionTooltip", _el, Ts.Anchor); }
+            try { await Js.InvokeVoidAsync("cookieClicker.positionTooltip", _el, Ts.Anchor, Ts.AnchorMouseY); }
             catch { /* ignore transient interop errors */ }
         }
     }

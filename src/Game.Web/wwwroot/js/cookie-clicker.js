@@ -127,7 +127,13 @@
     // cursor moves over that element. We prefer the right side of the anchor,
     // flipping to the left when it would overflow, and clamp vertically so the
     // card never spills off-screen.
-    window.cookieClicker.positionTooltip = function (el, anchor) {
+    //
+    // Optional `mouseY`: when the caller passes the pointer's Y at hover time,
+    // we align the card's top to the cursor instead of the anchor's top. This is
+    // for large anchors (e.g. the cursor ring's full-donut hit area) where
+    // "anchor top" sits far from where the player is actually pointing. Small
+    // anchors omit it and keep the original anchor-aligned behaviour untouched.
+    window.cookieClicker.positionTooltip = function (el, anchor, mouseY) {
         if (!el || !anchor) return;
         const gap = 10, margin = 8;
         const a = anchor.getBoundingClientRect();
@@ -150,8 +156,9 @@
         }
         if (x < margin) x = margin;
 
-        // Vertical: align the top with the anchor, then clamp into view.
-        let y = a.top;
+        // Vertical: align the top with the anchor (or the pointer, when given),
+        // then clamp into view.
+        let y = (typeof mouseY === 'number') ? mouseY : a.top;
         if (y + h > window.innerHeight - margin) {
             y = window.innerHeight - margin - h;
         }

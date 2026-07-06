@@ -2,15 +2,6 @@
    re-render frequency by subscribing to the game loop. *@
 
 @inject ILocalizer Loc
-@using Game.Web.Components
-
-@{
-    // Derive cursor ring status once per render — shows the current tier and
-    // next merge progress in the stats panel, avoiding the jitter that would
-    // come from putting a tooltip on the rotating ring.
-    var cursors = State.BuildingCounts.GetValueOrDefault(BuildingId.Cursor);
-    var cursorModel = CursorRingLayout.Compute(cursors);
-}
 
 <div class="stats">
     <div class="stats-bank">
@@ -25,21 +16,6 @@
         <span title="@Loc["ui.stats.clicks_title"]">@Loc.Format("ui.stats.clicks", NumberFormat.Format(State.HandmadeClicks))</span>
         <span title="@Loc["ui.stats.ach_title"]">🏆 @State.UnlockedAchievements.Count / @Achievements.All.Count</span>
     </div>
-    @if (cursors > 0)
-    {
-        <div class="stats-cursors" title="@Loc["ui.cursorring.title"]">
-            <span class="tier-dot tier-@cursorModel.Tier"></span>
-            @Loc["ui.cursorring.title"]: @NumberFormat.Format(cursors)
-            @if (cursorModel.NextMergeAt is { } next && next > cursors)
-            {
-                <span class="merge-progress">→ @NumberFormat.Format(next - cursors)</span>
-            }
-            else if (cursorModel.NextMergeAt is null)
-            {
-                <span class="merge-progress">✓ @Loc["ui.cursorring.tier.6"]</span>
-            }
-        </div>
-    }
     @if (State.Buffs.Count > 0)
     {
         <div class="stats-buffs">

@@ -65,37 +65,3 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
 }
-
-.stats-cursors {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: #a08765;
-    flex-wrap: wrap;
-}
-
-.tier-dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-/* Tier colours match the cursor ring's finger tier system (white→green→blue→
-   purple→orange→red→gold). Gold gets a subtle glow effect. */
-.tier-dot.tier-0 { background: #f5f5f5; }
-.tier-dot.tier-1 { background: #6fcf6f; }
-.tier-dot.tier-2 { background: #5aa9f0; }
-.tier-dot.tier-3 { background: #b57ee0; }
-.tier-dot.tier-4 { background: #f0a24b; }
-.tier-dot.tier-5 { background: #e85d5d; }
-.tier-dot.tier-6 { background: #f5d76e; box-shadow: 0 0 6px rgba(245, 215, 110, 0.6); }
-
-.merge-progress {
-    color: #8a704e;
-}
