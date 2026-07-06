@@ -21,6 +21,7 @@
             {
                 var affordable = State.Cookies >= up.Cost;
                 <button class="upgrade-tile @(affordable ? "" : "locked")"
+                        @key="up.Id"
                         @ref="_tiles[up.Id]"
                         disabled="@(!affordable)"
                         @onclick="() => Buy(up.Id)"
@@ -46,6 +47,19 @@
     protected override void OnParametersSet()
     {
         _available = State.AvailableUpgrades().ToList();
+
+        // Drop element refs for upgrades that are no longer shown (bought or
+        // re-locked). Left in place they'd be stale — pointing at detached or
+        // recycled DOM — and ShowTooltip could anchor the card to nothing,
+        // sending it to the top-left corner.
+        if (_tiles.Count > 0)
+        {
+            var live = _available.Select(u => u.Id).ToHashSet();
+            foreach (var id in _tiles.Keys.Where(k => !live.Contains(k)).ToList())
+            {
+                _tiles.Remove(id);
+            }
+        }
     }
 
     private async Task Buy(string id)

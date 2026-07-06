@@ -131,6 +131,16 @@
         if (!el || !anchor) return;
         const gap = 10, margin = 8;
         const a = anchor.getBoundingClientRect();
+
+        // A detached / not-yet-laid-out anchor reports an all-zero rect. Placing
+        // relative to it would slam the card into the top-left corner, so park it
+        // off-screen instead and wait for a real anchor on the next show.
+        if (a.width === 0 && a.height === 0 && a.top === 0 && a.left === 0) {
+            el.style.left = '-9999px';
+            el.style.top = '-9999px';
+            return;
+        }
+
         const w = el.offsetWidth, h = el.offsetHeight;
 
         // Horizontal: to the right of the anchor, else to its left.
