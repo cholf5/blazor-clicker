@@ -1,0 +1,50 @@
+@* Top-of-page "pinned announcement" shown only when a newer build has been
+   deployed. Sits directly above the news ticker and borrows its look, since a
+   new version is, in spirit, just another headline — but it needs a stable,
+   clickable refresh CTA that the scrolling ticker can't carry. *@
+
+@implements IDisposable
+@inject UpdateChecker Updater
+@inject SaveCoordinator Save
+@inject ILocalizer Loc
+@inject IJSRuntime JS
+
+@if (_visible)
+{
+    <div class="update-banner" role="status">
+        <span class="update-icon">🍪</span>
+        <span class="update-text">@Loc["ui.update.available"]</span>
+        <button class="update-refresh" @onclick="RefreshAsync">@Loc["ui.update.refresh"]</button>
+        <button class="update-dismiss" @onclick="Dismiss" aria-label="@Loc["ui.update.dismiss"]">🗙</button>
+    </div>
+}
+
+@code {
+    private bool _visible;
+
+    protected override void OnInitialized()
+    {
+        Updater.OnUpdateAvailable += OnUpdateAvailable;
+        // Cover the race where the update was detected before this component
+        // subscribed (checker latches, so the event may already have fired).
+        _visible = Updater.UpdateAvailable;
+    }
+
+    private void OnUpdateAvailable() => InvokeAsync(() =>
+    {
+        _visible = true;
+        StateHasChanged();
+    });
+
+    private async Task RefreshAsync()
+    {
+        // Save first: autosave runs every 15s, but an explicit write before the
+        // reload guarantees not a single cookie is lost across the update.
+        await Save.SaveNowAsync();
+        await JS.InvokeVoidAsync("location.reload");
+    }
+
+    private void Dismiss() => _visible = false;
+
+    public void Dispose() => Updater.OnUpdateAvailable -= OnUpdateAvailable;
+}

@@ -191,6 +191,11 @@ public static class TranslationsZhHant
         ["ui.footer.title"] = "Cookie Clicker · Blazor 粉絲復刻",
         ["ui.footer.subtitle"] = "非官方作品，與 Orteil / DashNet 無關。每 15 秒自動儲存到瀏覽器本機儲存空間。",
 
+        // ---- Update banner --------------------------------------------------
+        ["ui.update.available"] = "有新版本可用。",
+        ["ui.update.refresh"] = "立即重新整理",
+        ["ui.update.dismiss"] = "關閉",
+
         // ---- News ticker: ambient idle lines --------------------------------
         ["news.idle.delicious"] = "研究發現，餅乾在科學上依然美味。",
         ["news.idle.grandma_award"] = "本地奶奶再次入圍知名烘焙大獎。",

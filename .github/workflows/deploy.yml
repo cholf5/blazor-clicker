@@ -47,6 +47,12 @@ jobs:
       - name: Add .nojekyll
         run: touch publish/wwwroot/.nojekyll
 
+      # Stamp the deployed build with its commit SHA so the running app can
+      # poll version.json and offer a refresh when a new build ships. Overwrites
+      # the {"version":"dev"} placeholder committed for local development.
+      - name: Write version.json
+        run: echo "{\"version\":\"${GITHUB_SHA::7}\"}" > publish/wwwroot/version.json
+
       # SPA fallback so client-side routes (e.g. deep links) don't 404.
       - name: Add SPA 404 fallback
         run: cp publish/wwwroot/index.html publish/wwwroot/404.html

@@ -4,6 +4,7 @@
 @inject AudioService Audio
 @inject ILocalizer Loc
 @inject LanguageService Lang
+@inject UpdateChecker Updater
 @implements IDisposable
 
 <PageTitle>Cookie Clicker — Blazor Fan Remake (unofficial)</PageTitle>
@@ -14,6 +15,7 @@
      (unimplemented) building visualization. The options gear sits at the far
      right — away from the cookie's click zone and the gameplay column, where
      players expect settings to live. -->
+<UpdateBanner />
 <div class="game-masthead">
     <NewsTicker @ref="_news" State="Save.State" />
     <OptionsMenu OnStateChanged="OnStateReplaced" />
@@ -88,6 +90,11 @@
         if (_offlineSummary is not null) Save.AcknowledgeOfflineSummary();
 
         Loop.Start();
+
+        // Begin polling for new deployments so long-lived idle sessions can be
+        // offered a refresh. Fire-and-forget: failures inside are swallowed and
+        // simply mean "no update prompt", which must never block startup.
+        _ = Updater.StartAsync();
     }
 
     private void OnTick()

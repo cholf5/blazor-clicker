@@ -193,6 +193,11 @@ public static class TranslationsEn
         ["ui.footer.title"] = "Cookie Clicker · Blazor fan remake",
         ["ui.footer.subtitle"] = "Unofficial. Not affiliated with Orteil / DashNet. Autosaves every 15s to your browser's local storage.",
 
+        // ---- Update banner --------------------------------------------------
+        ["ui.update.available"] = "A new version is available.",
+        ["ui.update.refresh"] = "Refresh now",
+        ["ui.update.dismiss"] = "Dismiss",
+
         // ---- News ticker: ambient idle lines --------------------------------
         ["news.idle.delicious"] = "Study finds cookies remain scientifically delicious.",
         ["news.idle.grandma_award"] = "Local grandma nominated for prestigious baking award — again.",

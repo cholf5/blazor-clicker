@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Game.Core\Game.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Game.Web.Tests" />
+  </ItemGroup>
+
 </Project>
