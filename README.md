@@ -13,16 +13,14 @@
 
 <img src="docs/screenshots/demo.gif" alt="Gameplay demo" width="800">
 
+**中文版本: [`README.zh-CN.md`](./README.zh-CN.md)**
+
 </div>
 
 > ⚠️ **Unofficial fan project.** Not affiliated with, endorsed by, or derived from the
 > source code of Orteil / DashNet's Cookie Clicker. No original source, art, audio, or
 > flavor text is reused — only unprotectable mechanics/numbers and 12 generic building
 > names. See [`NOTICE.md`](./NOTICE.md) for full attribution and the take-down policy.
->
-> 非官方粉丝作品。未附属于、未获授权于、也未复制原版 Cookie Clicker 的源码；未复用任何
-> 原版源码、美术、音效或文案，仅保留不受版权保护的机制/数值与 12 个通用建筑名。详见
-> [`NOTICE.md`](./NOTICE.md)。
 
 ---
 
@@ -36,10 +34,6 @@ app, and to use it as a serious Blazor WebAssembly learning vehicle.
 The result is a **complete, self-contained core game** you can play right now in your
 browser — no install, no account, no ads, no tracking.
 
-> 用现代技术栈重构一个 UI 密集的老式增量游戏，把原版塞在单个 god class 里的 3000+ 行逻辑
-> 拆成**分层清晰、可测试、可持续演进**的现代 Web 应用。本项目**只做**早期「纯指数增长」形态，
-> 但把这个核心做**完整**——打开浏览器即玩，无需安装、无账号、无广告、无监测。
-
 <div align="center">
 <table>
 <tr>
@@ -47,15 +41,15 @@ browser — no install, no account, no ads, no tracking.
 <td width="50%"><img src="docs/screenshots/options.png" alt="Late-game" width="100%"></td>
 </tr>
 <tr>
-<td align="center"><em>三栏布局 · 建筑 / CPS / 成就</em></td>
-<td align="center"><em>选项 · 支持多种语言</em></td>
+<td align="center"><em>Three-column layout · buildings / CPS / achievements</em></td>
+<td align="center"><em>Options · multi-language support</em></td>
 </tr>
 </table>
 </div>
 
 ---
 
-## 🎮 Features / 功能亮点
+## 🎮 Features
 
 - 🏭 **18 buildings** — the early 12 (Cursor → Time Machine) plus 6 late-game
   additions, with single / ×10 / ×100 batch buying and cost-scaling formulas.
@@ -75,9 +69,9 @@ browser — no install, no account, no ads, no tracking.
 
 ---
 
-## 🛠 Tech Stack / 技术栈
+## 🛠 Tech Stack
 
-| Layer / 层 | Choice / 选择 |
+| Layer | Choice |
 |---|---|
 | Language | C# (.NET 10) |
 | UI | Blazor WebAssembly |
@@ -93,15 +87,12 @@ system that *forces* the god class apart. `Game.Core` runs headless under xUnit,
 static publish deploys free to GitHub Pages. Alternatives evaluated (Godot / Unity / Uno /
 React+C#-WASM / plain React) are recorded in [ADR 0001](docs/decisions/0001-technology-stack.md).
 
-> 单一技术栈、无胶水层、微软官方长期维护，类型系统天然逼着拆 god class；`Game.Core` 可脱离
-> 浏览器用 xUnit 测试，静态发布白嫖 GitHub Pages。其他备选方案的取舍见 ADR 0001。
-
-**Known trade-offs / 已知代价:** the first load pulls a few MB of .NET runtime (AOT +
+**Known trade-offs:** the first load pulls a few MB of .NET runtime (AOT +
 trimming can shrink it to 1–2 MB); AI codegen for Blazor is less mature than for React.
 
 ---
 
-## 🏗 Architecture / 架构
+## 🏗 Architecture
 
 Strict one-way dependency: **UI → domain, never the reverse.**
 
@@ -135,7 +126,7 @@ Full ADR index, retrospectives and doc structure: [`docs/README.md`](docs/README
 
 ---
 
-## 🚀 Getting Started / 本地开发
+## 🚀 Getting Started
 
 Requires **.NET 10 SDK** (verified on `10.0.301`).
 
@@ -158,7 +149,7 @@ dotnet publish src/Game.Web/Game.Web.csproj -c Release -o publish
 
 ---
 
-## 📦 Deployment / 部署
+## 📦 Deployment
 
 Pushes to `main` trigger [`deploy.yml`](.github/workflows/deploy.yml): **restore → test →
 publish → GitHub Pages**. The workflow rewrites `<base href>` for the repo subpath, adds
@@ -168,7 +159,7 @@ To enable on a fork: **Settings → Pages → Source = "GitHub Actions".**
 
 ---
 
-## 📐 Scope Boundary / 范围边界
+## 📐 Scope Boundary
 
 Per [ADR 0004](docs/decisions/0004-scope-boundary.md), this project **deliberately**
 implements only the early-game pure-growth toy and **rejects** active-management late-game
@@ -177,12 +168,9 @@ Wrinklers / Grandmapocalypse. The achievement count (~334 vs. the original's 622
 intentionally *not* chased — the gap is a consequence of not building those subsystems, not
 a backlog. New achievements should extend the pure-growth axis, not pad the count.
 
-> 这不是「半成品」，而是**主动收敛的完整核心**：只做纯指数增长玩具，拒绝园艺/股市/万神殿等
-> 主动管理型后期系统。成就数量差距是刻意取舍，不是待办。
-
 ---
 
-## 📄 License & Attribution / 许可与归属
+## 📄 License & Attribution
 
 - **Original game** — Cookie Clicker by Julien "Orteil" Thiennot / DashNet
   ([official free web version](https://orteil.dashnet.org/cookieclicker/)). Names, art,
