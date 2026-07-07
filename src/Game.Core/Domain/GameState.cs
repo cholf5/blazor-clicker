@@ -353,6 +353,54 @@ public sealed class GameState
         return true;
     }
 
+    // =========================================================================
+    // Debug / GM operations
+    //
+    // These bypass every cost check on purpose — they exist so a developer can
+    // fast-forward to a state that's tedious to reach by hand (e.g. owning enough
+    // Cursors to fill all five decorative rings). They live in the domain, not the
+    // UI, because the "UI → domain, never the reverse" rule means the web layer
+    // can't reach in and poke Cookies / BuildingCounts directly (those setters are
+    // internal/private). The *only* caller is a Debug-only GM panel guarded by
+    // `#if DEBUG`, so in a Release/GitHub-Pages build these methods compile but are
+    // unreachable — no cheat surface ships to players. They stay outside `#if
+    // DEBUG` here so the Release test run (dotnet test -c Release) can still cover
+    // them.
+    // =========================================================================
+
+    /// <summary>Grant cookies outright, crediting the baked totals as if earned so
+    /// milestone achievements and prestige math stay consistent. Debug/GM only.</summary>
+    public void DebugAddCookies(double amount)
+    {
+        if (amount <= 0) return;
+        Cookies += amount;
+        AddBaked(amount);
+    }
+
+    /// <summary>Add copies of a building for free (no cost, no unlock gate).
+    /// Negative or zero <paramref name="count"/> is a no-op. Debug/GM only.</summary>
+    public void DebugAddBuilding(BuildingId id, int count)
+    {
+        if (count <= 0) return;
+        BuildingCounts[id] = BuildingCounts.GetValueOrDefault(id) + count;
+    }
+
+    /// <summary>Grant every upgrade in the catalog for free, ignoring cost and
+    /// unlock conditions. Already-owned upgrades are left as-is. Debug/GM only.</summary>
+    public void DebugUnlockAllUpgrades()
+    {
+        foreach (var up in Upgrades.All)
+            PurchasedUpgrades.Add(up.Id);
+    }
+
+    /// <summary>Add to the spendable sugar-lump balance for free. Negative or zero
+    /// is a no-op. Debug/GM only.</summary>
+    public void DebugAddSugarLumps(long count)
+    {
+        if (count <= 0) return;
+        SugarLumps += count;
+    }
+
     /// <summary>Drain queued achievement notifications for display.</summary>
     public IReadOnlyList<string> DrainAchievementNotifications()
     {

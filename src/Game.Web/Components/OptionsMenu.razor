@@ -75,6 +75,36 @@
                 <LanguageSelect />
             </section>
 
+            @* Debug/GM controls. Gated on the compile-time DebugEnabled constant
+               (true only in Debug builds) via @if — NOT a markup #if, which Razor
+               does not reliably strip, so the buttons could survive a Release
+               build. Runtime-gating keeps markup + handlers always compiling; in
+               Release DebugEnabled is false so this never renders and the cheat
+               buttons are unreachable. Every button routes into a
+               GameState.Debug* method (the domain owns the mutation) then saves +
+               notifies Home to re-render. *@
+            @if (DebugEnabled)
+            {
+                <section class="options-section options-debug">
+                    <h3>🐛 @Loc["ui.options.section_debug"]</h3>
+                    <div class="options-buttons">
+                        <button class="save-btn" @onclick="() => AddCookies(1e6)">🍪 +1M</button>
+                        <button class="save-btn" @onclick="() => AddCookies(1e9)">🍪 +1B</button>
+                        <button class="save-btn" @onclick="() => AddCookies(1e12)">🍪 +1T</button>
+                        <button class="save-btn" @onclick="() => AddCookies(1e15)">🍪 +1Qa</button>
+                    </div>
+                    <div class="options-buttons">
+                        <button class="save-btn" @onclick="() => AddEachBuilding(10)">🏠 +10 all</button>
+                        <button class="save-btn" @onclick="() => AddEachBuilding(100)">🏠 +100 all</button>
+                        <button class="save-btn" @onclick="AddCursors">👆 +200 cursors</button>
+                    </div>
+                    <div class="options-buttons">
+                        <button class="save-btn" @onclick="UnlockUpgrades">⬆ Unlock upgrades</button>
+                        <button class="save-btn" @onclick="() => AddSugarLumps(50)">🍬 +50 lumps</button>
+                    </div>
+                </section>
+            }
+
             @if (_toast is not null)
             {
                 <div class="options-toast">@_toast</div>
@@ -238,6 +268,63 @@
             _toast = null;
             StateHasChanged();
         });
+    }
+
+#if DEBUG
+    // Cheat controls render only in Debug builds. Deliberately static readonly,
+    // not const: a const false would make the Release @if body provably dead code
+    // and trip CS0162 (this project builds with warnings-as-noise-zero). As a
+    // readonly field the value is still fixed per build (true in Debug, false in
+    // Release) — the panel never renders in Release — without the dead-code
+    // warning, and a player can't flip it at runtime.
+    private static readonly bool DebugEnabled = true;
+#else
+    private static readonly bool DebugEnabled = false;
+#endif
+
+    // Debug/GM handlers. Always compiled (so the always-compiled markup can bind
+    // to them regardless of build config); only ever invoked when DebugEnabled is
+    // true, i.e. never in Release. Each mutates via a GameState.Debug* method (the
+    // domain owns the change), then persists and notifies Home so the CPS readout,
+    // shop and cursor ring reflect it immediately.
+    private async Task AddCookies(double amount)
+    {
+        Save.State.DebugAddCookies(amount);
+        await AfterCheat($"+{NumberFormat.Format(amount)} 🍪");
+    }
+
+    private async Task AddEachBuilding(int count)
+    {
+        foreach (var b in Buildings.All)
+            Save.State.DebugAddBuilding(b.Id, count);
+        await AfterCheat($"+{count} of every building");
+    }
+
+    private async Task AddCursors()
+    {
+        Save.State.DebugAddBuilding(BuildingId.Cursor, 200);
+        await AfterCheat("+200 cursors");
+    }
+
+    private async Task UnlockUpgrades()
+    {
+        Save.State.DebugUnlockAllUpgrades();
+        await AfterCheat("All upgrades unlocked");
+    }
+
+    private async Task AddSugarLumps(long count)
+    {
+        Save.State.DebugAddSugarLumps(count);
+        await AfterCheat($"+{count} 🍬");
+    }
+
+    // Shared tail: persist the cheat so a reload keeps it, tell Home to re-render,
+    // and surface a toast confirming what happened.
+    private async Task AfterCheat(string message)
+    {
+        await Save.SaveNowAsync();
+        await OnStateChanged.InvokeAsync();
+        FlashToast(message);
     }
 
     [Inject] IJSRuntime JS { get; set; } = default!;

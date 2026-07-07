@@ -23,6 +23,7 @@ public static class TranslationsEn
         ["ui.options.section_data"] = "Save data",
         ["ui.options.section_sound"] = "Sound",
         ["ui.options.section_language"] = "Language",
+        ["ui.options.section_debug"] = "Debug (dev only)",
 
         // ---- Language selector (shown in each language's own script) --------
         ["ui.settings.language"] = "Language",

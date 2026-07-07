@@ -21,6 +21,7 @@ public static class TranslationsZhHans
         ["ui.options.section_data"] = "存档数据",
         ["ui.options.section_sound"] = "声音",
         ["ui.options.section_language"] = "语言",
+        ["ui.options.section_debug"] = "调试（仅开发）",
 
         // ---- Language selector ----------------------------------------------
         ["ui.settings.language"] = "语言",

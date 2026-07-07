@@ -112,6 +112,12 @@
 .save-btn:hover { background: rgba(255, 255, 255, 0.16); }
 .save-btn.danger:hover { background: rgba(200, 60, 60, 0.4); border-color: rgba(200, 60, 60, 0.6); }
 
+/* Debug/GM section (Debug builds only): tinted apart from the real controls so
+   it reads as a dev tool, and its stacked button rows get a little breathing
+   room between them. */
+.options-debug h3 { color: #8fd18f; }
+.options-debug .options-buttons + .options-buttons { margin-top: 0.4rem; }
+
 .save-import {
     display: flex;
     flex-direction: column;
