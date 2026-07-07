@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Game.Web.Components;
 
@@ -11,22 +12,39 @@ namespace Game.Web.Components;
 /// <para><b>Why a fixed on-screen budget.</b> Each finger is a live-animated DOM
 /// element; unlike the original game's single &lt;canvas&gt;, DOM layout/paint
 /// cost grows with element count regardless of how fast WASM runs. So the ring
-/// holds at most 5 concentric rings — 16/24/32/40/48 = <see cref="MaxFingers"/>
-/// slots. Growth beyond that is expressed by <i>colour</i>, not more elements:
-/// once the rings are full we pick the lowest colour tier T such that
-/// ceil(count / 2^T) still fits in 160 slots, and draw that many fingers all at
-/// tier T. Each tier up means every finger "represents" twice as many cursors
-/// (white=1, green=2, blue=4, … gold=64). If even gold (tier 6) overflows, we
-/// clamp to 160 gold fingers — the true rendering ceiling.</para>
+/// holds at most a handful of concentric rings whose per-ring slot counts live
+/// in the single source of truth <see cref="RingCapacities"/>; their sum is
+/// <see cref="MaxFingers"/>. Growth beyond that is expressed by <i>colour</i>,
+/// not more elements: once the rings are full we pick the lowest colour tier T
+/// such that ceil(count / 2^T) still fits in <see cref="MaxFingers"/> slots, and
+/// draw that many fingers all at tier T. Each tier up means every finger
+/// "represents" twice as many cursors (white=1, green=2, blue=4, … gold=64). If
+/// even gold (tier 6) overflows, we clamp to <see cref="MaxFingers"/> gold
+/// fingers — the true rendering ceiling.</para>
 /// </summary>
 public static class CursorRingLayout
 {
     /// <summary>Slots per concentric ring, innermost first. Widening rings hold
-    /// more fingers without overlap. Sum is <see cref="MaxFingers"/>.</summary>
-    public static readonly int[] RingCapacities = [18, 24, 30, 36, 52];
+    /// more fingers without overlap. This is the <b>single source of truth</b>
+    /// for the ring shape: the on-screen budget (<see cref="MaxFingers"/>) and
+    /// every colour-merge threshold are derived from it, so tuning a ring's
+    /// finger count here (or adding/removing a ring) automatically re-derives the
+    /// merge maths and the tests — nothing else hard-codes these numbers.
+    ///
+    /// <para>A <c>static readonly</c> field now the values are settled. While
+    /// tuning it live it was briefly an expression-bodied property so
+    /// <c>dotnet watch</c> Hot Reload could re-apply edits (a static field
+    /// initializer only runs once in the static constructor, which Hot Reload
+    /// never re-executes). That's a needless per-access array allocation once the
+    /// numbers are final — restore the property form if you need to hot-tune these
+    /// again.</para></summary>
+    public static readonly int[] RingCapacities = [30, 36, 42, 48, 54];
 
-    /// <summary>Total on-screen finger budget (sum of <see cref="RingCapacities"/>).</summary>
-    public const int MaxFingers = 160;
+    /// <summary>Total on-screen finger budget — the sum of
+    /// <see cref="RingCapacities"/>, computed once so it can never drift from the
+    /// array. Every merge threshold keys off this, so changing the array reshapes
+    /// the whole progression.</summary>
+    public static readonly int MaxFingers = RingCapacities.Sum();
 
     /// <summary>Highest colour tier (0=white … 6=gold). Gold is the last tier;
     /// past it the ring stops growing entirely.</summary>
@@ -36,13 +54,16 @@ public static class CursorRingLayout
     /// The cookie image is a round cookie inscribed in its 500×500 frame, drawn
     /// 15rem wide, so its edge reaches ≈7.5rem out at the four cardinal
     /// directions (top/bottom/left/right — exactly where low finger counts land).
-    /// A finger box reaches ≈1.15rem inward from its anchor and the poke taps
-    /// ≈0.5rem further, so the anchor must sit ≈9rem out for the fingertip to
+    /// A finger box reaches ≈0.95rem inward from its anchor and the poke taps
+    /// ≈0.4rem further, so the anchor must sit ≈8rem out for the fingertip to
     /// rest just past the cookie edge and only "tap" it on the poke.</summary>
-    private const double BaseRadiusRem = 8.5;
+    private const double BaseRadiusRem = 8.4;
 
-    /// <summary>Radial gap between successive rings, in rem.</summary>
-    private const double RingGapRem = 1.0;
+    /// <summary>Radial gap between successive rings, in rem. Paired with the
+    /// shrunk ≈1.9rem-tall finger box and denser per-ring slot counts so
+    /// neighbouring rings stay visually distinct without pushing the outermost
+    /// ring off-screen.</summary>
+    private const double RingGapRem = 1.6;
 
     /// <summary>One rendered finger and everything the view needs to place it.</summary>
     /// <param name="GlobalIndex">Stable index across all rings; used as the render
@@ -77,9 +98,9 @@ public static class CursorRingLayout
             return new RingModel(Array.Empty<Finger>(), Tier: 0, PerFinger: 1, CursorCount: 0, NextMergeAt: MaxFingers);
         }
 
-        // Lowest tier whose 2^tier grouping fits the count into 160 slots. Each
-        // tier doubles what one finger stands for, so we climb only as far as we
-        // must — keeping the ring as "white" (low tier) as possible for as long
+        // Lowest tier whose 2^tier grouping fits the count into MaxFingers slots.
+        // Each tier doubles what one finger stands for, so we climb only as far as
+        // we must — keeping the ring as "white" (low tier) as possible for as long
         // as possible, matching the original's slow colour progression.
         var tier = 0;
         while (tier < MaxTier && CeilDiv(cursorCount, 1L << tier) > MaxFingers)
@@ -88,12 +109,12 @@ public static class CursorRingLayout
         }
 
         var perFinger = 1L << tier;
-        // At the gold ceiling this may still exceed 160 for astronomical counts;
-        // clamp so the on-screen element count never passes the budget.
+        // At the gold ceiling this may still exceed MaxFingers for astronomical
+        // counts; clamp so the on-screen element count never passes the budget.
         var fingerCount = (int)Math.Min(MaxFingers, CeilDiv(cursorCount, perFinger));
 
         // The next merge happens when the count first exceeds what the current
-        // tier can hold across all 160 slots (160 * 2^tier). Null once gold is
+        // tier can hold across all slots (MaxFingers * 2^tier). Null once gold is
         // both reached and saturated — nothing further will ever change.
         long? nextMergeAt = null;
         if (tier < MaxTier)
@@ -117,9 +138,11 @@ public static class CursorRingLayout
         var remaining = fingerCount;
         var global = 0;
 
-        for (var ring = 0; ring < RingCapacities.Length && remaining > 0; ring++)
+        var capacities = RingCapacities;
+
+        for (var ring = 0; ring < capacities.Length && remaining > 0; ring++)
         {
-            var n = Math.Min(remaining, RingCapacities[ring]);
+            var n = Math.Min(remaining, capacities[ring]);
             var radius = BaseRadiusRem + ring * RingGapRem;
             var step = 360.0 / n;
             // Offset alternate rings by half a slot so adjacent rings interleave.

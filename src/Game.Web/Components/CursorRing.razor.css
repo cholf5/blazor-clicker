@@ -21,15 +21,16 @@
 }
 
 /* Stationary, invisible hit target for the tooltip. It's a donut covering the
-   finger band (inner rings ≈8.5rem out to outer ≈12.5rem) with a hollow centre
-   the size of the cookie, punched out via a radial-gradient mask so clicks fall
-   straight through to the big cookie. Being fixed (outside the spinner), its
-   bounding rect is constant, so the tooltip anchors here and never chases the
-   rotating fingers — the bug that killed the original ring tooltip. */
+   finger band (inner rings ≈8.2rem out to outer ≈17rem when all 5 rings fill)
+   with a hollow centre the size of the cookie, punched out via a radial-gradient
+   mask so clicks fall straight through to the big cookie. Being fixed (outside
+   the spinner), its bounding rect is constant, so the tooltip anchors here and
+   never chases the rotating fingers — the bug that killed the original ring
+   tooltip. */
 .cursor-ring-hit {
     position: absolute;
-    width: 26rem;
-    height: 26rem;
+    width: 36rem;
+    height: 36rem;
     border-radius: 50%;
     pointer-events: auto;
     cursor: help;
@@ -58,8 +59,8 @@
        the hover from the hit ring, firing mouseout and making the tooltip flicker
        (and the old finger-as-anchor bug is exactly what the hit ring replaced). */
     pointer-events: none;
-    width: 1.4rem;
-    height: 2.3rem;
+    width: 1.15rem;
+    height: 1.9rem;
 }
 
 /* Inner wrapper does the "poke" toward the cookie — a short push inward and
@@ -81,7 +82,7 @@
     fill: var(--finger-fill, #f5f5f5);
     stroke: var(--finger-stroke, rgba(0, 0, 0, 0.35));
     /* Non-scaling stroke keeps the outline crisp and constant regardless of
-       the 448×512 viewBox being scaled to fit the 1.4rem CSS box. */
+       the 448×512 viewBox being scaled to fit the 1.15rem CSS box. */
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
@@ -112,7 +113,7 @@
    fingertip toward the centre. */
 @keyframes cursor-finger-poke {
     0%, 70%, 100% { transform: translateY(0); }
-    85% { transform: translateY(0.5rem); }
+    85% { transform: translateY(0.4rem); }
 }
 
 /* Respect reduced-motion: freeze both the orbit and the tapping so the ring is
@@ -127,15 +128,15 @@
 @media (max-width: 900px) {
     .cursor-finger {
         transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-0.66 * var(--radius)));
-        width: 1rem;
-        height: 1.6rem;
+        width: 0.82rem;
+        height: 1.35rem;
     }
 
     /* Shrink the hit donut with the ring and move the hollow centre in to the
        10rem cookie's 5rem radius, so clicks still fall through to the cookie. */
     .cursor-ring-hit {
-        width: 17rem;
-        height: 17rem;
+        width: 24rem;
+        height: 24rem;
         -webkit-mask: radial-gradient(circle at center, transparent 5rem, #000 5rem);
         mask: radial-gradient(circle at center, transparent 5rem, #000 5rem);
     }
