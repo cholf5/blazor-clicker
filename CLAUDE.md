@@ -48,6 +48,16 @@ Pushes to `main` trigger `.github/workflows/deploy.yml` (restore → test →
 publish → GitHub Pages), which rewrites `<base href>` for the repo subpath,
 adds `.nojekyll`, and copies `index.html` to `404.html` for SPA fallback.
 
+## Git workflow
+
+- **Commit directly on `main`.** This is a solo learning project; there is
+  no PR gate, and CI (build + test) runs on every push. Do **not** create
+  a short-lived feature branch just because the default branch is `main` —
+  it adds ceremony without value here. Branch only if the user explicitly
+  asks, or if a change is exploratory enough to want isolation.
+- Still commit / push only when the user asks — a push publishes to
+  GitHub Pages immediately, so it must be a deliberate step.
+
 ## Architecture
 
 Two projects plus tests, with a strict one-way dependency: **UI → domain, never the reverse.**
