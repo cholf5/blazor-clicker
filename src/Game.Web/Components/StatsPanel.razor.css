@@ -1,6 +1,10 @@
 .stats {
     text-align: center;
     padding: 1rem 0.5rem;
+    /* Anchor for the absolutely-positioned buff row below — see .stats-buffs.
+       Without this, activating a Frenzy buff would grow the panel and push the
+       big cookie downward, which players read as jitter. */
+    position: relative;
 }
 
 .stats-bank-count {
@@ -38,11 +42,22 @@
 }
 
 .stats-buffs {
-    margin-top: 1rem;
+    /* Overlay the buff pills just below the stats panel instead of reserving
+       vertical flow space. Otherwise a fresh "Frenzy x7" pill would extend
+       .stats and shift the centred big cookie down by its height. */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.5rem;
     display: flex;
     justify-content: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    /* The pills are decorative status readouts, not click targets — let clicks
+       fall through to the big cookie underneath. */
+    pointer-events: none;
+    z-index: 5;
 }
 
 .buff {
