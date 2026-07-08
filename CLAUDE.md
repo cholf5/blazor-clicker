@@ -135,6 +135,19 @@ one `record` plus at most one new counter. Do **not** add a new subsystem to
 pad the count. Overturning this direction requires a new ADR, not a quiet
 feature addition.
 
+## Reference source
+
+The upstream Cookie Clicker source lives at `../cookieclicker-reference/`
+(sibling to this repo — `main.js`, `style.css`, `index.html`, `img/`). When
+a question is "how does the original behave", **grep that tree first** — do
+not `WebFetch` orteil.dashnet.org. The local copy is the ground truth; the
+live site can carry stale or unrelated CSS classes that look plausible but
+are not actually wired to the elements you care about.
+
+Nothing from that directory is copied into this project — it is a read-only
+reference for behavior questions only. See `NOTICE.md` for the attribution
+and take-down policy.
+
 ## Conventions
 
 - Domain code carries `<summary>` doc comments explaining *why*, especially on
