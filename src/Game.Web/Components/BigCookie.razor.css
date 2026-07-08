@@ -1,3 +1,11 @@
+/* Click "bounce" mirrors the original Cookie Clicker (cookieclicker-reference/
+   style.css:430-467) verbatim: it is not a keyframe animation. The whole feel
+   is produced by a 100ms transition on transform+opacity plus two pseudo-class
+   states — :hover scales up slightly and fades, :active scales *uniformly*
+   down to 0.98 (which is why the cookie stays round and does not deform).
+   Releasing the mouse lets the transition carry it back, and that return glide
+   is what reads as the "bounce". No JS, no @keyframes, no restart trick. */
+
 .big-cookie {
     background: none;
     border: none;
@@ -6,12 +14,14 @@
     margin: 0;
     line-height: 1;
     filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
-    transition: transform 80ms ease-out;
+    /* Original uses 0.1s ease-out on opacity and transform together. */
+    transition: opacity 100ms ease-out, transform 100ms ease-out;
     user-select: none;
     /* Sit above the decorative milk layer (z-index:1) so the cookie stays
        fully visible and clickable no matter how high the milk rises. */
     position: relative;
     z-index: 2;
+    transform-origin: 50% 50%;
 }
 
 .big-cookie-img {
@@ -23,9 +33,12 @@
     user-select: none;
 }
 
-.big-cookie:hover { transform: scale(1.03); }
-.big-cookie:active { transform: scale(0.9); }
-.big-cookie.bounce { transform: scale(0.9); }
+.big-cookie:hover  { transform: scale(1.05); opacity: 0.9; }
+.big-cookie:active { transform: scale(0.98); opacity: 1;   }
+
+@media (max-width: 900px) {
+    .big-cookie-img { width: 10rem; height: 10rem; }
+}
 
 @media (max-width: 900px) {
     .big-cookie-img { width: 10rem; height: 10rem; }
