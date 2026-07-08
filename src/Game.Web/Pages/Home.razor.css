@@ -106,12 +106,45 @@
     font-weight: 700;
     color: #b39868;
     letter-spacing: 0.05em;
+    /* Title text + inline credit icons share this row so the footer stays
+       two lines tall — same footprint as before we added the links.
+       line-height: 1 shrinks the text's line box to match the glyph so its
+       optical center aligns with the fixed-size icon boxes; without this
+       the inherited body line-height inflates the text box and the glyph's
+       cap-center drifts below the icons' geometric center. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    line-height: 1;
 }
 
 .game-subtitle {
     font-size: 0.7rem;
     color: #7a5a3a;
     margin-top: 0.15rem;
+}
+
+/* Credit links: muted next to the title so they read as attribution, not
+   part of the identifying text; warm on hover to invite the click. */
+.game-link {
+    display: inline-flex;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: #7a5a3a;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.game-link:hover,
+.game-link:focus-visible {
+    color: #d9b976;
+    transform: translateY(-1px);
+}
+
+.game-link svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
 }
 
 .game-center {

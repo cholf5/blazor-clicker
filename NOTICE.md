@@ -50,12 +50,17 @@ This project is:
 
 ## Third-party assets
 
-- **Font Awesome Free** (<https://fontawesome.com>) — the "hand-pointer"
-  (solid) icon path is used for the decorative cursor-ring fingers drawn
-  around the big cookie. Font Awesome Free icons are licensed under
-  **CC BY 4.0** (<https://fontawesome.com/license/free>). The path is
-  embedded inline in `Game.Web/Components/CursorRing.razor`. This is an
-  original Font Awesome icon, unrelated to Cookie Clicker's assets.
+- **Font Awesome Free** (<https://fontawesome.com>) — three icon paths are
+  used verbatim: the "hand-pointer" (solid) icon for the decorative
+  cursor-ring fingers around the big cookie, and the "GitHub" and
+  "X-Twitter" brand marks for the two footer credit links. Font Awesome
+  Free icons are licensed under **CC BY 4.0**
+  (<https://fontawesome.com/license/free>); the brand marks additionally
+  remain trademarks of their respective owners and are used here solely as
+  navigational glyphs pointing to the linked accounts. The paths are
+  embedded inline in `Game.Web/Components/CursorRing.razor` and
+  `Game.Web/Pages/Home.razor`. These are original Font Awesome icons,
+  unrelated to Cookie Clicker's assets.
 
 ## Attribution
 

@@ -191,6 +191,8 @@ public static class TranslationsZhHant
         // ---- Footer ---------------------------------------------------------
         ["ui.footer.title"] = "Cookie Clicker · Blazor 粉絲復刻",
         ["ui.footer.subtitle"] = "非官方作品，與 Orteil / DashNet 無關。每 15 秒自動儲存到瀏覽器本機儲存空間。",
+        ["ui.footer.github"] = "在 GitHub 上檢視原始碼",
+        ["ui.footer.x"] = "在 X 上追蹤作者",
 
         // ---- Update banner --------------------------------------------------
         ["ui.update.available"] = "有新版本可用。",

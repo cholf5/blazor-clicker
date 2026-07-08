@@ -193,6 +193,8 @@ public static class TranslationsEn
         // ---- Footer ---------------------------------------------------------
         ["ui.footer.title"] = "Cookie Clicker · Blazor fan remake",
         ["ui.footer.subtitle"] = "Unofficial. Not affiliated with Orteil / DashNet. Autosaves every 15s to your browser's local storage.",
+        ["ui.footer.github"] = "View source on GitHub",
+        ["ui.footer.x"] = "Follow the author on X",
 
         // ---- Update banner --------------------------------------------------
         ["ui.update.available"] = "A new version is available.",
