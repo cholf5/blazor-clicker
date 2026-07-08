@@ -1,0 +1,579 @@
+/* =========================================================================
+   Stats dialog — dashboard-style modal.
+
+   Aesthetic: dark chocolate glass with copper trim, matching the game shell,
+   but structured like a small BI dashboard: hero tiles up top, then labeled
+   panels for the sparkline, the details grid, building contribution, progress
+   bars, prestige, purchased upgrades, and sugar lumps. Every panel is the
+   same shape (rounded card with an inset border and a heading strip) so the
+   whole modal reads as one instrument cluster.
+   ========================================================================= */
+
+/* Trigger button in the masthead — twin to `.options-open-btn` so the two
+   sit as a matched pair on the trailing edge of the top row. */
+.stats-open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    color: #d7bd8b;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.3rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 100ms, color 100ms, border-color 100ms;
+}
+
+.stats-open-btn:hover {
+    color: #ffdc86;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(182, 135, 60, 0.6);
+}
+
+/* -------- Modal shell ---------------------------------------------------- */
+
+.stats-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 6, 2, 0.75);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 30px 20px;
+    z-index: 45;
+    animation: stats-fade 200ms ease-out;
+}
+
+.stats-dialog {
+    position: relative;
+    width: min(1000px, 100%);
+    margin: auto;
+    /* Slightly cooler than the options gradient so hero tiles pop against it. */
+    background:
+        radial-gradient(circle at 20% -10%, rgba(255, 200, 120, 0.08), transparent 60%),
+        linear-gradient(180deg, #2f2011 0%, #180d04 100%);
+    border-radius: 14px;
+    padding: 22px 24px 26px;
+    color: #ffedcf;
+    box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.7),
+        inset 0 0 0 1px #b6873c,
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    /* Panels arrange as a 2-column grid on desktop so the dialog uses the
+       horizontal space desktop screens make available instead of stretching
+       into a very long single column that always requires scrolling. The
+       header and hero row above the grid sit as normal block children; only
+       elements from `.stats-hero` onward participate in the grid, and any
+       panel marked `.stats-span-full` re-consumes the full row width (used by
+       the hero tiles, the CPS chart, and the wide-flow Purchased Upgrades
+       panel). `dense` packs shorter panels (Prestige, Sugar lumps) into the
+       gap a taller neighbour leaves rather than creating uneven whitespace.
+
+       Below the media-query breakpoint we fall back to a single column so
+       every panel keeps its full width on phones. */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    grid-auto-flow: row dense;
+    align-items: start;
+}
+
+.stats-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+}
+
+/* Hero row + any panel that wants the full dialog width (chart, upgrades). */
+.stats-span-full {
+    grid-column: 1 / -1;
+}
+
+.stats-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #ffdc86;
+    letter-spacing: 0.02em;
+}
+
+.stats-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f2e6cf;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.3rem;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.stats-close:hover { background: rgba(255, 255, 255, 0.18); }
+
+/* -------- Hero tiles: three big numeric cards --------------------------- */
+
+.stats-hero {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.hero-card {
+    position: relative;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+        inset 0 0 20px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* A tinted glow in the corner tells the tile apart at a glance without
+   fighting the game palette. Colors correspond to bank / cps / all-time. */
+.hero-card::before {
+    content: "";
+    position: absolute;
+    inset: -40px -40px auto auto;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    opacity: 0.35;
+    filter: blur(20px);
+    pointer-events: none;
+}
+
+.hero-gold::before   { background: radial-gradient(#ffd857, transparent 70%); }
+.hero-copper::before { background: radial-gradient(#ff9c3d, transparent 70%); }
+.hero-bronze::before { background: radial-gradient(#c98c53, transparent 70%); }
+
+.hero-icon {
+    font-size: 20px;
+    line-height: 1;
+    opacity: 0.9;
+}
+
+.hero-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff5da;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.005em;
+    /* Long numbers ("999.999 quadrillion") shouldn't blow out a hero tile:
+       ellipsis rather than wrap keeps every tile the same height. */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b39a70;
+}
+
+.hero-chip {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(255, 216, 87, 0.18);
+    color: #ffdc86;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid rgba(255, 216, 87, 0.35);
+}
+
+/* -------- Uniform panel shape (used by every remaining section) --------- */
+
+.stats-panel {
+    padding: 12px 14px 14px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.stats-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.stats-panel-head h3 {
+    margin: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #d7bd8b;
+}
+
+.stats-panel-badge {
+    font-size: 0.75rem;
+    color: #ffd857;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 216, 87, 0.12);
+    border: 1px solid rgba(255, 216, 87, 0.25);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Right-hand cluster inside a panel head: hosts controls (sort toggle) plus
+   the count badge. Kept separate from `.stats-panel-head` because a plain
+   `justify-content: space-between` would only balance the h3 against one
+   sibling. */
+.stats-panel-head-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Segmented "Category / Recent" toggle for the Purchased Upgrades panel. */
+.stats-sort-toggle {
+    display: inline-flex;
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.stats-sort-btn {
+    appearance: none;
+    background: transparent;
+    color: #b39a70;
+    border: 0;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 100ms, color 100ms;
+    font-family: inherit;
+}
+
+.stats-sort-btn:hover:not(.is-active) { color: #ffedcf; }
+
+.stats-sort-btn.is-active {
+    background: rgba(255, 216, 87, 0.18);
+    color: #ffdc86;
+    box-shadow: inset 0 0 0 1px rgba(255, 216, 87, 0.35);
+}
+
+.stats-empty {
+    padding: 10px 6px;
+    font-size: 0.8rem;
+    color: #8f7d5b;
+    font-style: italic;
+    text-align: center;
+}
+
+/* -------- CPS sparkline -------------------------------------------------- */
+
+.stats-chart {
+    position: relative;
+    height: 66px;
+    padding: 4px 0;
+}
+
+.chart-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* Subtle horizontal grid, painted with background not SVG so it lines up
+       cleanly regardless of the sparkline's non-scaling stroke. */
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px) 0 0 / 100% 25% repeat-y,
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+    border-radius: 6px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.chart-axis {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 54px;
+    pointer-events: none;
+    font-size: 0.65rem;
+    color: #8f7d5b;
+    font-variant-numeric: tabular-nums;
+}
+
+.chart-warming {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8f7d5b;
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+/* -------- Details grid: compact stat chips ------------------------------ */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    min-width: 0; /* let long values ellipsize instead of stretching the grid */
+}
+
+.stat-chip-icon {
+    font-size: 18px;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.stat-chip-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.stat-chip-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #b39a70;
+}
+
+.stat-chip-value {
+    font-size: 0.95rem;
+    color: #ffedcf;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* -------- Building contribution bars ------------------------------------ */
+
+.stats-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.stats-bar-row { display: flex; flex-direction: column; gap: 4px; }
+
+.stats-bar-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+.stats-bar-icon { font-size: 15px; line-height: 1; }
+.stats-bar-name { color: #ffedcf; flex: 0 0 auto; }
+.stats-bar-caption {
+    color: #8f7d5b;
+    font-size: 0.72rem;
+    flex: 1;
+}
+.stats-bar-value {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    font-variant-numeric: tabular-nums;
+}
+.stats-bar-value strong { color: #ffedcf; font-weight: 600; }
+.stats-bar-value em {
+    color: #ffd857;
+    font-style: normal;
+    font-size: 0.75rem;
+    min-width: 34px;
+    text-align: right;
+}
+
+.stats-bar-track {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.stats-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #a56a2a 0%, #ffb85a 60%, #ffd857 100%);
+    border-radius: 3px;
+    min-width: 2px;
+    transition: width 200ms ease-out;
+}
+
+/* -------- Progress bars (upgrades / achievements / milk) --------------- */
+
+.stats-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Individual progress row — reuses --fill for its bar color so callers can
+   pass an accent inline without needing per-instance CSS. */
+.stats-progress {
+    --fill: #ffd857;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stats-progress-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+.stats-progress-icon { font-size: 15px; line-height: 1; }
+.stats-progress-label { color: #ffedcf; flex: 1; }
+.stats-progress-value {
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+}
+.stats-progress-value strong { color: #ffedcf; font-weight: 600; }
+.stats-progress-value em {
+    color: #8f7d5b;
+    font-style: normal;
+    font-size: 0.72rem;
+}
+
+.stats-progress-track {
+    height: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.stats-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--fill) 55%, #4a2f10) 0%, var(--fill) 100%);
+    border-radius: 4px;
+    min-width: 2px;
+    transition: width 250ms ease-out;
+}
+
+/* Milk gets a distinct pastel treatment so a 4% fill on it doesn't look
+   identical to a 4% "no upgrades yet" bar. */
+.milk-fill {
+    background: linear-gradient(90deg, #d5cbb6 0%, #fff7dd 100%);
+}
+
+/* -------- Prestige feature line ---------------------------------------- */
+
+.stats-prestige {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(255, 216, 87, 0.08);
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgba(255, 216, 87, 0.2);
+    color: #fff5da;
+    font-size: 0.9rem;
+}
+
+.prestige-icon { font-size: 22px; line-height: 1; }
+.prestige-text { font-variant-numeric: tabular-nums; }
+
+/* -------- Purchased upgrades: grouped chips ---------------------------- */
+
+.stats-upgrade-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.upgrade-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.upgrade-group-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b39a70;
+}
+
+.upgrade-group-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.upgrade-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 216, 87, 0.15);
+    border-radius: 999px;
+    color: #ffedcf;
+    font-size: 0.75rem;
+    cursor: default;
+    transition: background 100ms, border-color 100ms;
+    /* Long, un-cropped upgrade names would otherwise force the whole row to
+       stretch — soft-cap chip width and ellipsize the label. */
+    max-width: 220px;
+}
+.upgrade-chip:hover {
+    background: rgba(255, 216, 87, 0.12);
+    border-color: rgba(255, 216, 87, 0.5);
+}
+.upgrade-chip-icon { font-size: 13px; line-height: 1; }
+.upgrade-chip-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes stats-fade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Narrow viewports: collapse the 2-column grid to a single column so every
+   panel takes the full width. Also drops the hero row to a single column so
+   three 22px-value tiles don't fight for width under ~480px. */
+@media (max-width: 720px) {
+    .stats-dialog { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .stats-hero { grid-template-columns: 1fr; }
+    .stats-dialog { padding: 18px 16px 22px; }
+    /* On phone widths the sort labels and count badge risk crowding out the
+       panel title — stack the head into two rows so the toggle sits below. */
+    .stats-panel-head { flex-wrap: wrap; row-gap: 6px; }
+}

@@ -15,7 +15,7 @@ namespace Game.Core;
 /// </summary>
 public static class SaveSystem
 {
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 6;
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -125,6 +125,20 @@ public static class SaveSystem
                     // BuildingLevels defaults to empty.
                     data.BuildingLevels ??= new();
                     data.Version = 5;
+                    break;
+
+                case 5:
+                    // v5 → v6: added per-upgrade purchase timestamps so the Stats
+                    // dialog can sort by recent purchase. We don't know when each
+                    // pre-existing upgrade was actually bought, so backfill them
+                    // all with the save's current GameTime. That clusters every
+                    // legacy purchase at load time and lets subsequent buys sort
+                    // above it — imprecise but monotonic, which is all "recent
+                    // first" needs.
+                    data.UpgradePurchaseTimes ??= new();
+                    foreach (var id in data.PurchasedUpgrades)
+                        data.UpgradePurchaseTimes.TryAdd(id, data.GameTime);
+                    data.Version = 6;
                     break;
 
                 default:

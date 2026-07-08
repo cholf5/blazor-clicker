@@ -90,4 +90,28 @@ public static class NumberFormat
         }
         return Format(value);
     }
+
+    /// <summary>
+    /// Format a duration in seconds as a human-friendly "45s" / "12m 34s" /
+    /// "1h 23m" string. Below a minute it renders whole seconds; below an hour,
+    /// minutes with an optional seconds trailer; above an hour, hours with an
+    /// optional minutes trailer (seconds are intentionally dropped past the
+    /// minute mark — a stats readout that ticks every second is noise, not
+    /// signal). Shared by <c>OfflineDialog</c> ("you were away for X") and the
+    /// Stats dialog ("time played") so both use one canonical wording.
+    /// </summary>
+    public static string FormatDuration(double seconds)
+    {
+        if (!double.IsFinite(seconds) || seconds < 0) seconds = 0;
+        if (seconds < 60) return $"{(int)seconds}s";
+        if (seconds < 3600)
+        {
+            var m = (int)(seconds / 60);
+            var s = (int)(seconds % 60);
+            return s > 0 ? $"{m}m {s}s" : $"{m}m";
+        }
+        var h = (int)(seconds / 3600);
+        var mm = (int)((seconds % 3600) / 60);
+        return mm > 0 ? $"{h}h {mm}m" : $"{h}h";
+    }
 }

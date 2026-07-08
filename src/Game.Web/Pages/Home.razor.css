@@ -9,14 +9,15 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Let the news ticker take the width; the options gear stays a compact
-   trailing item. ::deep reaches the child components' root elements, which
-   carry their own scope and so are otherwise untouchable from here. */
+/* Let the news ticker take the width; the trailing masthead buttons (Stats,
+   Options) stay compact. ::deep reaches the child components' root elements,
+   which carry their own scope and so are otherwise untouchable from here. */
 .game-masthead ::deep .news-ticker {
     flex: 1;
     min-width: 0;
 }
 
+.game-masthead ::deep .stats-open-btn,
 .game-masthead ::deep .options-open-btn {
     flex: 0 0 auto;
 }

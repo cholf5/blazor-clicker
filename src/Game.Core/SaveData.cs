@@ -27,8 +27,15 @@ public sealed class SaveData
     ///   balance", and <see cref="BuildingLevels"/> was added (levels bought with
     ///   lumps, +1% per level to that one building). Older saves keep their lump
     ///   count as the starting balance and default BuildingLevels to empty.
+    /// * v6 — added <see cref="UpgradePurchaseTimes"/>: the simulated
+    ///   <see cref="Domain.GameState.GameTime"/> at which each purchased upgrade
+    ///   was bought, so the Stats dialog can offer a "sort by recent purchase"
+    ///   view. Pre-v6 saves migrate by backfilling every already-owned upgrade
+    ///   with the save's current GameTime — imprecise but monotonic (everything
+    ///   bought pre-migration clusters at load time; subsequent purchases push
+    ///   above it in order).
     /// </summary>
-    public int Version { get; set; } = 5;
+    public int Version { get; set; } = 6;
 
     // ---- v1 fields ---------------------------------------------------------
     public double Cookies { get; set; }
@@ -93,4 +100,15 @@ public sealed class SaveData
     /// building only). Empty on saves that pre-date v5.
     /// </summary>
     public Dictionary<BuildingId, int> BuildingLevels { get; set; } = new();
+
+    // ---- v6 additions ------------------------------------------------------
+    /// <summary>
+    /// Simulated <see cref="Domain.GameState.GameTime"/> (seconds) at which each
+    /// upgrade in <see cref="PurchasedUpgrades"/> was bought. Powers the Stats
+    /// dialog's "sort by recent purchase" view. Empty on saves that pre-date
+    /// v6; the v5→v6 migration backfills every already-owned upgrade with the
+    /// save's current GameTime so old entries cluster at load time and new
+    /// purchases sort above them.
+    /// </summary>
+    public Dictionary<string, double> UpgradePurchaseTimes { get; set; } = new();
 }

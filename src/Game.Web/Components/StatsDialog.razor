@@ -1,0 +1,641 @@
+@* Full statistics dashboard — the equivalent of Cookie Clicker's "Stats"
+   menu, styled as a mini Grafana-style panel.
+
+   The tiny StatsPanel in the left column is a HUD (bank / CPS / a handful of
+   counters) that stays glanceable while the shop is active. This modal is the
+   other side: a comprehensive read-only readout of every persisted counter,
+   opened from the masthead 📊 button. Kept as its own component (rather than
+   a section inside OptionsMenu) because the original CC treats Stats and
+   Options as distinct top-row entries — burying the frequently-checked stats
+   panel behind a rarely-touched settings gear would misread player intent.
+
+   Reads live from GameState — the parent re-renders every tick, so while the
+   modal is open its numbers stay current without any subscription of our own.
+   A small local ring buffer of CPS samples powers the sparkline; it fills in
+   the background whether the dialog is open or not, so the chart already has
+   history to show on first open. *@
+
+@inject ILocalizer Loc
+@inject TooltipService Tooltip
+@implements IDisposable
+
+<button class="stats-open-btn" @onclick="Open" title="@Loc["ui.statspage.open"]">
+    📊 @Loc["ui.statspage.open"]
+</button>
+
+@if (_open)
+{
+    <div class="stats-backdrop" @onclick="Close">
+        <div class="stats-dialog" @onclick:stopPropagation="true">
+            <div class="stats-header">
+                <h2>📊 @Loc["ui.statspage.title"]</h2>
+                <button class="stats-close" @onclick="Close" title="@Loc["ui.options.close"]">✕</button>
+            </div>
+
+            @* -------- Hero cards: three big numeric tiles ------------------ *@
+            <div class="stats-hero stats-span-full">
+                <div class="hero-card hero-gold">
+                    <div class="hero-icon">🍪</div>
+                    <div class="hero-value">@NumberFormat.FormatStable(State.Cookies)</div>
+                    <div class="hero-label">@Loc["ui.statspage.hero.bank"]</div>
+                </div>
+                <div class="hero-card hero-copper">
+                    <div class="hero-icon">⚡</div>
+                    <div class="hero-value">@NumberFormat.FormatRate(State.CurrentCps())</div>
+                    <div class="hero-label">@Loc["ui.statspage.hero.cps"]</div>
+                    @if (GlobalMultiplierPercent() is int pct && pct != 100)
+                    {
+                        <div class="hero-chip">×@(pct)%</div>
+                    }
+                </div>
+                <div class="hero-card hero-bronze">
+                    <div class="hero-icon">🏆</div>
+                    <div class="hero-value">@NumberFormat.Format(State.AllTimeCookiesBaked)</div>
+                    <div class="hero-label">@Loc["ui.statspage.hero.baked_all_time"]</div>
+                </div>
+            </div>
+
+            @* -------- CPS sparkline --------------------------------------- *@
+            <section class="stats-panel stats-span-full">
+                <header class="stats-panel-head">
+                    <h3>@Loc["ui.statspage.section_history"]</h3>
+                    <span class="stats-panel-badge">@NumberFormat.FormatRate(State.CurrentCps())</span>
+                </header>
+                @if (_cpsHistory.Count >= 2)
+                {
+                    var (path, area, yMax) = BuildSparkline();
+                    <div class="stats-chart">
+                        <svg class="chart-svg" viewBox="0 0 200 50" preserveAspectRatio="none" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="statsChartFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#ffd857" stop-opacity="0.55" />
+                                    <stop offset="100%" stop-color="#ffd857" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="@area" fill="url(#statsChartFill)" />
+                            <path d="@path" fill="none" stroke="#ffd857" stroke-width="1.2"
+                                  stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+                        </svg>
+                        <div class="chart-axis">
+                            <span>0</span>
+                            <span>@NumberFormat.FormatRate(yMax)</span>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="stats-chart chart-warming">@Loc["ui.statspage.chart.warming"]</div>
+                }
+            </section>
+
+            @* -------- Details grid (compact stat cards) ------------------- *@
+            <section class="stats-panel">
+                <header class="stats-panel-head">
+                    <h3>@Loc["ui.statspage.section_general"]</h3>
+                </header>
+                <div class="stats-grid">
+                    @Chip("🥧", Loc["ui.statspage.row.baked_run"], NumberFormat.Format(State.TotalCookiesBaked))
+                    @Chip("👆", Loc["ui.statspage.row.click_power"], NumberFormat.FormatRate(State.ClickPower()))
+                    @Chip("🖱️", Loc["ui.statspage.row.clicks"], NumberFormat.Format(State.HandmadeClicks))
+                    @Chip("✋", Loc["ui.statspage.row.handmade"], NumberFormat.Format(State.HandmadeCookies))
+                    @Chip("🥠", Loc["ui.statspage.row.golden_clicks"], NumberFormat.Format(State.GoldenCookiesClicked))
+                    @if (State.GoldenClicksDuringFrenzy > 0)
+                    {
+                        @Chip("💥", Loc["ui.statspage.row.golden_combos"], NumberFormat.Format(State.GoldenClicksDuringFrenzy))
+                    }
+                    @Chip("🏠", Loc["ui.statspage.row.buildings_owned"], NumberFormat.Format(TotalBuildingsOwned()))
+                    @Chip("⏱️", Loc["ui.statspage.row.playtime"], NumberFormat.FormatDuration(State.GameTime))
+                    @if (State.AscensionCount > 0)
+                    {
+                        @Chip("🕊️", Loc["ui.statspage.row.ascensions"], NumberFormat.Format(State.AscensionCount))
+                    }
+                </div>
+            </section>
+
+            @* -------- Building contribution horizontal bar chart --------- *@
+            <section class="stats-panel">
+                <header class="stats-panel-head">
+                    <h3>@Loc["ui.statspage.section_contribution"]</h3>
+                </header>
+                @{
+                    var owned = OwnedBuildings();
+                }
+                @if (owned.Count == 0)
+                {
+                    <div class="stats-empty">@Loc["ui.statspage.contribution.empty"]</div>
+                }
+                else
+                {
+                    <div class="stats-bars">
+                        @foreach (var row in owned)
+                        {
+                            <div class="stats-bar-row">
+                                <div class="stats-bar-head">
+                                    <span class="stats-bar-icon">@row.Icon</span>
+                                    <span class="stats-bar-name">@row.Name</span>
+                                    <span class="stats-bar-caption">@Loc.Format("ui.statspage.contribution.item", row.Count)</span>
+                                    <span class="stats-bar-value">
+                                        <strong>@NumberFormat.FormatRate(row.Cps)</strong>
+                                        <em>@($"{row.SharePercent}%")</em>
+                                    </span>
+                                </div>
+                                <div class="stats-bar-track">
+                                    <div class="stats-bar-fill" style="width: @(row.SharePercent)%;"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            @* -------- Progress bars ---------------------------------------- *@
+            <section class="stats-panel">
+                <header class="stats-panel-head">
+                    <h3>@Loc["ui.statspage.section_progress"]</h3>
+                </header>
+                <div class="stats-progress-list">
+                    @ProgressBar("⬆",
+                        Loc["ui.statspage.row.upgrades"],
+                        State.PurchasedUpgrades.Count,
+                        Upgrades.All.Count,
+                        "#ffb85a")
+                    @ProgressBar("🏆",
+                        Loc["ui.statspage.row.achievements"],
+                        State.UnlockedAchievements.Count,
+                        Achievements.All.Count,
+                        "#e5c46b")
+                    @{
+                        var milkPct = (int)Math.Round(State.MilkFactor() * 100);
+                        var kitten = State.MilkCpsMultiplier();
+                        var milkAnnotation = kitten > 1.0
+                            ? Loc.Format("ui.statspage.row.milk_kitten", kitten.ToString("0.##"))
+                            : null;
+                    }
+                    <div class="stats-progress">
+                        <div class="stats-progress-head">
+                            <span class="stats-progress-icon">🥛</span>
+                            <span class="stats-progress-label">@Loc["ui.statspage.row.milk"]</span>
+                            <span class="stats-progress-value">
+                                <strong>@(milkPct)%</strong>
+                                @if (milkAnnotation is not null)
+                                {
+                                    <em>@milkAnnotation</em>
+                                }
+                            </span>
+                        </div>
+                        <div class="stats-progress-track">
+                            <div class="stats-progress-fill milk-fill"
+                                 style="width: @(Math.Min(100, milkPct))%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            @* -------- Prestige (hidden until the player has any) ---------- *@
+            @if (State.PrestigeLevel > 0)
+            {
+                var bonusPct = (int)Math.Round(State.PrestigeLevel * ProgressionConfig.PrestigeCpsBonus * 100);
+                // English uses "chip"/"chips"; other languages drop the {1} slot.
+                var pluralS = State.PrestigeLevel == 1 ? "" : "s";
+                <section class="stats-panel">
+                    <header class="stats-panel-head">
+                        <h3>@Loc["ui.statspage.section_prestige"]</h3>
+                    </header>
+                    <div class="stats-prestige">
+                        <span class="prestige-icon">✨</span>
+                        <span class="prestige-text">
+                            @Loc.Format("ui.statspage.row.heavenly", State.PrestigeLevel, pluralS, bonusPct)
+                        </span>
+                    </div>
+                </section>
+            }
+
+            @* -------- Purchased upgrades ---------------------------------- *@
+            <section class="stats-panel stats-panel-upgrades stats-span-full">
+                <header class="stats-panel-head">
+                    <h3>@Loc["ui.statspage.section_upgrades_owned"]</h3>
+                    <div class="stats-panel-head-right">
+                        <div class="stats-sort-toggle" role="tablist" aria-label="@Loc["ui.statspage.section_upgrades_owned"]">
+                            <button type="button"
+                                    class="stats-sort-btn @(_sortMode == UpgradeSort.Category ? "is-active" : null)"
+                                    role="tab"
+                                    aria-selected="@(_sortMode == UpgradeSort.Category ? "true" : "false")"
+                                    @onclick="() => _sortMode = UpgradeSort.Category">
+                                @Loc["ui.statspage.upgrades_sort_category"]
+                            </button>
+                            <button type="button"
+                                    class="stats-sort-btn @(_sortMode == UpgradeSort.Recent ? "is-active" : null)"
+                                    role="tab"
+                                    aria-selected="@(_sortMode == UpgradeSort.Recent ? "true" : "false")"
+                                    @onclick="() => _sortMode = UpgradeSort.Recent">
+                                @Loc["ui.statspage.upgrades_sort_recent"]
+                            </button>
+                        </div>
+                        <span class="stats-panel-badge">@State.PurchasedUpgrades.Count</span>
+                    </div>
+                </header>
+                @{
+                    var groups = OwnedUpgradeGroups(_sortMode);
+                }
+                @if (groups.Count == 0)
+                {
+                    <div class="stats-empty">@Loc["ui.statspage.upgrades_empty"]</div>
+                }
+                else
+                {
+                    <div class="stats-upgrade-groups">
+                        @foreach (var g in groups)
+                        {
+                            <div class="upgrade-group">
+                                @if (!string.IsNullOrEmpty(g.Label))
+                                {
+                                    <div class="upgrade-group-label">@g.Label</div>
+                                }
+                                <div class="upgrade-group-chips">
+                                    @foreach (var up in g.Upgrades)
+                                    {
+                                        <button class="upgrade-chip"
+                                                @key="up.Id"
+                                                @ref="_chipRefs[up.Id]"
+                                                @onmouseover="() => ShowUpgradeTooltip(up)"
+                                                @onmouseout="Tooltip.Hide">
+                                            <span class="upgrade-chip-icon">@up.Icon</span>
+                                            <span class="upgrade-chip-name">@up.DisplayName(Loc)</span>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            @* -------- Sugar lumps (only once the system has revealed itself) *@
+            @if (State.SugarLumpsUnlocked)
+            {
+                <section class="stats-panel">
+                    <header class="stats-panel-head">
+                        <h3>@Loc["ui.statspage.section_sugar"]</h3>
+                    </header>
+                    <div class="stats-grid">
+                        @Chip("🍬", Loc["ui.statspage.row.sugar_balance"], NumberFormat.Format(State.SugarLumps))
+                        @Chip("🏗️", Loc["ui.statspage.row.sugar_levels"], NumberFormat.Format(TotalBuildingLevels()))
+                    </div>
+                </section>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameState State { get; set; } = default!;
+
+    private bool _open;
+
+    // Sort mode for the Purchased Upgrades panel. Kept as component-local state
+    // (not persisted): the panel is glanceable, so remembering the last chosen
+    // order across sessions isn't worth a save-schema bump. Category is the
+    // default because it's the mental model most players share with the shop.
+    private UpgradeSort _sortMode = UpgradeSort.Category;
+
+    private enum UpgradeSort { Category, Recent }
+
+    // ---- Sparkline sample buffer -------------------------------------------
+    // Rolling window of recent (gameTime, cps) samples. The parent re-renders
+    // every tick, so OnParametersSet fires roughly every game frame; a 500ms
+    // throttle keeps the buffer sparse (2 samples/sec × 60s = up to 120
+    // entries — trimmed to `MaxSamples`). Sampling runs whether or not the
+    // dialog is open so the chart is already populated when the player opens
+    // it, instead of showing a blank "warming up" placeholder for a minute.
+    private const int WindowSeconds = 60;
+    private const int MaxSamples = 120;
+    private readonly Queue<Sample> _cpsHistory = new();
+    private double _lastSampledAt = double.NegativeInfinity;
+
+    // Cached element refs for upgrade chips so hover can anchor the tooltip
+    // beside the actual chip. Keyed by upgrade id; rebuilt each render.
+    private readonly Dictionary<string, ElementReference> _chipRefs = new();
+
+    // Same pattern as OptionsMenu: subscribe so labels re-localize in place
+    // while the dialog is open — otherwise a language switch made from Options
+    // wouldn't take effect on the (already-rendered) Stats dialog until reopen.
+    protected override void OnInitialized()
+    {
+        Loc.OnLanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Loc.OnLanguageChanged -= OnLanguageChanged;
+        Tooltip.Hide();
+    }
+
+    // Sample every render, throttled by GameTime rather than wall clock so the
+    // series is honest during offline catch-up (which advances GameTime in one
+    // step; we skip enqueueing dozens of stale samples for that gap).
+    protected override void OnParametersSet()
+    {
+        var t = State.GameTime;
+        if (t - _lastSampledAt >= 0.5)
+        {
+            _lastSampledAt = t;
+            _cpsHistory.Enqueue(new Sample(t, State.CurrentCps()));
+            // Drop by age first (samples older than the display window), then
+            // enforce the hard count cap as a belt-and-braces safety net.
+            var cutoff = t - WindowSeconds;
+            while (_cpsHistory.Count > 0 && _cpsHistory.Peek().T < cutoff) _cpsHistory.Dequeue();
+            while (_cpsHistory.Count > MaxSamples) _cpsHistory.Dequeue();
+        }
+
+        // Prune stale chip refs (upgrades that stopped being owned, e.g. after
+        // an ascend). Left in place they'd anchor tooltips to detached DOM.
+        if (_chipRefs.Count > 0)
+        {
+            foreach (var id in _chipRefs.Keys.Where(id => !State.PurchasedUpgrades.Contains(id)).ToList())
+                _chipRefs.Remove(id);
+        }
+    }
+
+    private void Open() => _open = true;
+
+    private void Close()
+    {
+        _open = false;
+        // The tooltip host is app-global; make sure we don't leave a floating
+        // upgrade card behind when the dialog closes over its hover state.
+        Tooltip.Hide();
+    }
+
+    // ------------------------------------------------------------------------
+    // Derived data
+    // ------------------------------------------------------------------------
+
+    private int TotalBuildingsOwned()
+    {
+        var total = 0;
+        foreach (var c in State.BuildingCounts.Values) total += c;
+        return total;
+    }
+
+    private int TotalBuildingLevels()
+    {
+        var total = 0;
+        foreach (var v in State.BuildingLevels.Values) total += v;
+        return total;
+    }
+
+    // How much the aggregate multipliers (upgrades × prestige × milk-kitten)
+    // inflate the raw building sum, as a percent. 100 == no multipliers. Uses
+    // the base building sum, not the buff-inflated CurrentCps, so the readout
+    // stays stable across a Frenzy (Frenzy is separately visible via the buff
+    // pills in the HUD). Returns null when there is no production yet.
+    private int? GlobalMultiplierPercent()
+    {
+        double buildingSum = 0;
+        foreach (var b in Buildings.All)
+            buildingSum += State.GetBuildingTotalCps(b.Id);
+        if (buildingSum <= 0) return null;
+        return (int)Math.Round(State.CurrentCpsRaw() / buildingSum * 100);
+    }
+
+    // One row per owned building, ordered by decreasing contribution — the
+    // most useful ordering for a "what's carrying my run" glance. Uses
+    // BuildingCpsShare (which divides by the raw building sum, not the
+    // buff-inflated CurrentCps — the ratio cancels the shared multipliers).
+    private List<BarRow> OwnedBuildings()
+    {
+        var rows = new List<BarRow>();
+        foreach (var b in Buildings.All)
+        {
+            var count = State.BuildingCounts.GetValueOrDefault(b.Id);
+            if (count <= 0) continue;
+            var cps = State.GetBuildingTotalCps(b.Id);
+            var share = State.BuildingCpsShare(b.Id);
+            rows.Add(new BarRow(
+                Icon: b.Icon,
+                Name: b.DisplayName(Loc),
+                Count: count,
+                Cps: cps,
+                SharePercent: (int)Math.Round(share * 100)));
+        }
+        rows.Sort((a, b) => b.Cps.CompareTo(a.Cps));
+        return rows;
+    }
+
+    // Purchased upgrades grouped for display. Category mode groups by the
+    // catalog's UpgradeCategory in shop order (Cursor → Clicking → Building →
+    // Kitten), matching the shop's mental model. Recent mode collapses to a
+    // single unlabeled group sorted by descending purchase time; ties (which
+    // include every already-purchased upgrade backfilled by the v5→v6
+    // migration) fall back to catalog order for stability so the layout
+    // doesn't shuffle between renders.
+    private List<UpgradeGroup> OwnedUpgradeGroups(UpgradeSort mode)
+    {
+        if (mode == UpgradeSort.Recent)
+        {
+            var catalogOrder = new Dictionary<string, int>();
+            for (var i = 0; i < Upgrades.All.Count; i++)
+                catalogOrder[Upgrades.All[i].Id] = i;
+
+            var flat = State.PurchasedUpgrades
+                .Where(id => Upgrades.Exists(id))
+                .Select(id => Upgrades.Get(id))
+                .OrderByDescending(u => State.UpgradePurchaseTimes.GetValueOrDefault(u.Id, double.NegativeInfinity))
+                .ThenBy(u => catalogOrder.GetValueOrDefault(u.Id, int.MaxValue))
+                .ToList();
+            if (flat.Count == 0) return new List<UpgradeGroup>();
+            // Empty label suppresses the group header — the panel already has
+            // a "Purchased upgrades" title so a second heading would be noise.
+            return new List<UpgradeGroup> { new(Label: "", Upgrades: flat) };
+        }
+
+        var groups = new Dictionary<UpgradeCategory, List<UpgradeDefinition>>();
+        foreach (var id in State.PurchasedUpgrades)
+        {
+            if (!Upgrades.Exists(id)) continue;
+            var up = Upgrades.Get(id);
+            if (!groups.TryGetValue(up.Category, out var list))
+                groups[up.Category] = list = new List<UpgradeDefinition>();
+            list.Add(up);
+        }
+
+        // Fixed display order: same as the shop's category ordering.
+        var order = new[] { UpgradeCategory.Cursor, UpgradeCategory.Clicking,
+                            UpgradeCategory.Building, UpgradeCategory.Kitten };
+        var result = new List<UpgradeGroup>();
+        foreach (var cat in order)
+        {
+            if (!groups.TryGetValue(cat, out var list) || list.Count == 0) continue;
+            list.Sort((a, b) => a.Cost.CompareTo(b.Cost));
+            result.Add(new UpgradeGroup(
+                Label: Loc[$"ui.upgrade_category.{cat.ToString().ToLowerInvariant()}"],
+                Upgrades: list));
+        }
+        return result;
+    }
+
+    // Build the sparkline path (line + fill area) from the sample buffer.
+    // Coordinates are in the SVG viewBox space (0..200 × 0..50), with y=0 at
+    // the top; the path uses `preserveAspectRatio="none"` so the parent CSS
+    // width controls the actual pixel width. yMax is returned so the axis
+    // label can print the peak value alongside the chart.
+    private (string LinePath, string AreaPath, double YMax) BuildSparkline()
+    {
+        var samples = _cpsHistory.ToArray();
+        var t0 = samples[0].T;
+        var t1 = samples[^1].T;
+        var tSpan = Math.Max(0.001, t1 - t0);
+        var yMax = 0.0;
+        foreach (var s in samples) if (s.Cps > yMax) yMax = s.Cps;
+        if (yMax <= 0) yMax = 1; // avoid divide-by-zero; empty line renders flat at the bottom.
+
+        var line = new System.Text.StringBuilder();
+        for (var i = 0; i < samples.Length; i++)
+        {
+            var s = samples[i];
+            var x = (s.T - t0) / tSpan * 200;
+            // Reserve 2px of headroom at the top so the peak isn't clipped by
+            // the stroke; also 1px at the bottom for the same reason.
+            var y = 48 - (s.Cps / yMax) * 46;
+            line.Append(i == 0 ? "M" : "L").Append(x.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))
+                .Append(' ').Append(y.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append(' ');
+        }
+        var area = new System.Text.StringBuilder(line.ToString());
+        area.Append("L 200 50 L 0 50 Z");
+        return (line.ToString(), area.ToString(), yMax);
+    }
+
+    private void ShowUpgradeTooltip(UpgradeDefinition up)
+    {
+        if (!_chipRefs.TryGetValue(up.Id, out var anchor)) return;
+        Tooltip.Show(() => BuildUpgradeTooltip(up), anchor);
+    }
+
+    private RenderFragment BuildUpgradeTooltip(UpgradeDefinition up)
+    {
+        var rows = new List<(string, string)>
+        {
+            (Loc["ui.tooltip.effect"], EffectText(up)),
+        };
+        return @<TooltipCard Icon="@up.Icon"
+                             Title="@up.DisplayName(Loc)"
+                             Tag="@Loc[$"ui.upgrade_category.{up.Category.ToString().ToLowerInvariant()}"]"
+                             CssClass="upgrade"
+                             Rows="rows"
+                             Flavor="@up.DisplayDescription(Loc)" />;
+    }
+
+    // Mirrors UpgradeStore.EffectText so a hovered chip in the Stats dialog
+    // shows the same effect line the shop tooltip did. Duplicated because
+    // pulling this into a shared helper needs a small refactor beyond the
+    // scope of this feature.
+    private string EffectText(UpgradeDefinition up) => up.EffectKind switch
+    {
+        UpgradeEffectKind.BuildingMultiplier =>
+            Loc.Format("ui.effect.building_multiplier", up.EffectValue.ToString("0.##"),
+                up.TargetBuilding is { } b ? Buildings.Get(b).DisplayName(Loc) : Loc["ui.effect.building_fallback"]),
+        UpgradeEffectKind.ClickMultiplier =>
+            Loc.Format("ui.effect.click_multiplier", up.EffectValue.ToString("0.##")),
+        UpgradeEffectKind.GlobalCpsMultiplier =>
+            Loc.Format("ui.effect.global_multiplier", up.EffectValue.ToString("0.##")),
+        UpgradeEffectKind.KittenMilkMultiplier =>
+            Loc.Format("ui.effect.kitten",
+                (1 + State.MilkFactor() * up.EffectValue).ToString("0.##"),
+                (up.EffectValue * 100).ToString("0.##")),
+        UpgradeEffectKind.CursorPerNonCursorBuilding =>
+            Loc.Format("ui.effect.cursor_synergy", NumberFormat.Format(up.EffectValue)),
+        _ => up.DisplayDescription(Loc),
+    };
+
+    // ------------------------------------------------------------------------
+    // Fragment helpers (kept private + static-shape to keep the markup tidy)
+    // ------------------------------------------------------------------------
+
+    // A little "icon · label · value" chip used inside the stats grid. Rendered
+    // manually instead of via a child component so its DOM stays flat (only
+    // one element deep) and it participates in CSS grid layout directly.
+    private RenderFragment Chip(string icon, string label, string value) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "stat-chip");
+
+        builder.OpenElement(2, "span");
+        builder.AddAttribute(3, "class", "stat-chip-icon");
+        builder.AddContent(4, icon);
+        builder.CloseElement();
+
+        builder.OpenElement(5, "span");
+        builder.AddAttribute(6, "class", "stat-chip-body");
+
+        builder.OpenElement(7, "span");
+        builder.AddAttribute(8, "class", "stat-chip-label");
+        builder.AddContent(9, label);
+        builder.CloseElement();
+
+        builder.OpenElement(10, "span");
+        builder.AddAttribute(11, "class", "stat-chip-value");
+        builder.AddContent(12, value);
+        builder.CloseElement();
+
+        builder.CloseElement(); // body
+        builder.CloseElement(); // chip
+    };
+
+    // An icon + label + progress-bar row (Upgrades / Achievements / Milk).
+    // `color` sets the CSS `--fill` variable so each bar can have its own
+    // accent without a class explosion.
+    private RenderFragment ProgressBar(string icon, string label, int owned, int total, string color) => builder =>
+    {
+        var percent = total > 0 ? (int)Math.Round(owned / (double)total * 100) : 0;
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "stats-progress");
+        builder.AddAttribute(2, "style", $"--fill: {color};");
+
+        builder.OpenElement(3, "div");
+        builder.AddAttribute(4, "class", "stats-progress-head");
+
+        builder.OpenElement(5, "span");
+        builder.AddAttribute(6, "class", "stats-progress-icon");
+        builder.AddContent(7, icon);
+        builder.CloseElement();
+
+        builder.OpenElement(8, "span");
+        builder.AddAttribute(9, "class", "stats-progress-label");
+        builder.AddContent(10, label);
+        builder.CloseElement();
+
+        builder.OpenElement(11, "span");
+        builder.AddAttribute(12, "class", "stats-progress-value");
+        builder.OpenElement(13, "strong");
+        builder.AddContent(14, $"{owned}/{total}");
+        builder.CloseElement();
+        builder.OpenElement(15, "em");
+        builder.AddContent(16, $" ({percent}%)");
+        builder.CloseElement();
+        builder.CloseElement(); // value
+
+        builder.CloseElement(); // head
+
+        builder.OpenElement(17, "div");
+        builder.AddAttribute(18, "class", "stats-progress-track");
+        builder.OpenElement(19, "div");
+        builder.AddAttribute(20, "class", "stats-progress-fill");
+        builder.AddAttribute(21, "style", $"width: {Math.Min(100, percent)}%;");
+        builder.CloseElement();
+        builder.CloseElement();
+
+        builder.CloseElement(); // progress
+    };
+
+    // ------------------------------------------------------------------------
+    // Value types
+    // ------------------------------------------------------------------------
+
+    private readonly record struct Sample(double T, double Cps);
+
+    private sealed record BarRow(string Icon, string Name, int Count, double Cps, int SharePercent);
+
+    private sealed record UpgradeGroup(string Label, List<UpgradeDefinition> Upgrades);
+}

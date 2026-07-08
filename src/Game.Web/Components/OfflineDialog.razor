@@ -8,7 +8,7 @@
     <div class="offline-backdrop" @onclick="Dismiss">
         <div class="offline-dialog" @onclick:stopPropagation="true">
             <h2>@Loc["ui.offline.title"]</h2>
-            <p class="offline-elapsed">@Loc.Format("ui.offline.elapsed", FormatElapsed(s.Seconds))</p>
+            <p class="offline-elapsed">@Loc.Format("ui.offline.elapsed", NumberFormat.FormatDuration(s.Seconds))</p>
             <p class="offline-earned">@Loc.Format("ui.offline.earned", (s.Efficiency * 100).ToString("0"))</p>
             <div class="offline-amount">+@NumberFormat.Format(s.CookiesEarned) 🍪</div>
             @if (s.SugarLumpHarvestReady)
@@ -25,18 +25,4 @@
     [Parameter] public EventCallback OnDismiss { get; set; }
 
     private async Task Dismiss() => await OnDismiss.InvokeAsync();
-
-    private static string FormatElapsed(double seconds)
-    {
-        if (seconds < 60) return $"{(int)seconds}s";
-        if (seconds < 3600)
-        {
-            var m = (int)(seconds / 60);
-            var s = (int)(seconds % 60);
-            return s > 0 ? $"{m}m {s}s" : $"{m}m";
-        }
-        var h = (int)(seconds / 3600);
-        var mm = (int)((seconds % 3600) / 60);
-        return mm > 0 ? $"{h}h {mm}m" : $"{h}h";
-    }
 }

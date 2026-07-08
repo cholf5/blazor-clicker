@@ -34,6 +34,16 @@ public sealed class GameState
     public Dictionary<BuildingId, int> BuildingCounts { get; private set; } = new();
     public HashSet<string> PurchasedUpgrades { get; private set; } = new();
     public HashSet<string> UnlockedAchievements { get; private set; } = new();
+    /// <summary>
+    /// Simulated <see cref="GameTime"/> (seconds) at which each entry in
+    /// <see cref="PurchasedUpgrades"/> was bought. Used by the Stats dialog to
+    /// offer a "recently purchased" ordering — the raw <see cref="HashSet{T}"/>
+    /// enumeration order is undefined, so without this we couldn't answer
+    /// "what did I just buy?". Cleared alongside <see cref="PurchasedUpgrades"/>
+    /// on ascend, and stamped from a v5→v6 save migration for pre-existing
+    /// entries.
+    /// </summary>
+    public Dictionary<string, double> UpgradePurchaseTimes { get; private set; } = new();
 
     // ---- World clock (seconds since state creation, monotonic) ----
     public double GameTime { get; private set; }
@@ -141,6 +151,7 @@ public sealed class GameState
 
         Cookies -= def.Cost;
         PurchasedUpgrades.Add(upgradeId);
+        UpgradePurchaseTimes[upgradeId] = GameTime;
         return true;
     }
 
@@ -344,6 +355,7 @@ public sealed class GameState
         HandmadeClicks = 0;
         BuildingCounts.Clear();
         PurchasedUpgrades.Clear();
+        UpgradePurchaseTimes.Clear();
         Buffs.Clear();
         ActiveGolden = null;
         ScheduleNextGolden();
@@ -390,7 +402,10 @@ public sealed class GameState
     public void DebugUnlockAllUpgrades()
     {
         foreach (var up in Upgrades.All)
-            PurchasedUpgrades.Add(up.Id);
+        {
+            if (PurchasedUpgrades.Add(up.Id))
+                UpgradePurchaseTimes[up.Id] = GameTime;
+        }
     }
 
     /// <summary>Add to the spendable sugar-lump balance for free. Negative or zero
@@ -719,6 +734,7 @@ public sealed class GameState
         GameTime = data.GameTime;
         BuildingCounts = data.BuildingCounts.ToDictionary(k => k.Key, k => k.Value);
         PurchasedUpgrades = new HashSet<string>(data.PurchasedUpgrades);
+        UpgradePurchaseTimes = data.UpgradePurchaseTimes.ToDictionary(k => k.Key, k => k.Value);
         UnlockedAchievements = new HashSet<string>(data.UnlockedAchievements);
         Buffs = data.Buffs.ToList();
         ActiveGolden = data.ActiveGolden;
@@ -746,6 +762,7 @@ public sealed class GameState
         GameTime = GameTime,
         BuildingCounts = BuildingCounts.ToDictionary(k => k.Key, k => k.Value),
         PurchasedUpgrades = PurchasedUpgrades.ToList(),
+        UpgradePurchaseTimes = UpgradePurchaseTimes.ToDictionary(k => k.Key, k => k.Value),
         UnlockedAchievements = UnlockedAchievements.ToList(),
         Buffs = Buffs.ToList(),
         ActiveGolden = ActiveGolden,

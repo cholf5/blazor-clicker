@@ -192,6 +192,83 @@ public class SaveSystemTests
         Assert.Equal(s.SugarLumps, loaded.SugarLumps);
     }
 
+    [Fact]
+    public void BuyUpgrade_StampsPurchaseTime()
+    {
+        var s = new GameState { Cookies = 1_000_000 };
+        s.BuyBuilding(BuildingId.Cursor);
+        s.Tick(3.0); // advance GameTime so the stamp is non-zero
+
+        Assert.True(s.BuyUpgrade("tier_Cursor_1"));
+
+        Assert.True(s.UpgradePurchaseTimes.ContainsKey("tier_Cursor_1"));
+        Assert.Equal(s.GameTime, s.UpgradePurchaseTimes["tier_Cursor_1"], 4);
+    }
+
+    [Fact]
+    public void Ascend_ClearsUpgradePurchaseTimesAlongsideUpgrades()
+    {
+        var s = new GameState { Cookies = 1e15 };
+        s.BuyBuilding(BuildingId.Cursor);
+        s.BuyUpgrade("tier_Cursor_1");
+        Assert.NotEmpty(s.UpgradePurchaseTimes);
+
+        // Bake enough for at least one prestige level.
+        typeof(GameState).GetProperty("TotalCookiesBaked")!.SetValue(s, 1e15);
+        Assert.True(s.Ascend());
+
+        Assert.Empty(s.PurchasedUpgrades);
+        Assert.Empty(s.UpgradePurchaseTimes);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesUpgradePurchaseTimes()
+    {
+        var s = new GameState { Cookies = 1_000_000 };
+        s.BuyBuilding(BuildingId.Cursor);
+        s.Tick(1.25);
+        s.BuyUpgrade("tier_Cursor_1");
+        s.Tick(2.5);
+        s.BuyBuilding(BuildingId.Grandma);
+        s.Cookies = 1_000_000;
+        s.BuyUpgrade("tier_Grandma_1");
+
+        var json = SaveSystem.SerializeToJson(s);
+        var loaded = SaveSystem.DeserializeFromJson(json);
+
+        Assert.Equal(s.UpgradePurchaseTimes["tier_Cursor_1"], loaded.UpgradePurchaseTimes["tier_Cursor_1"], 4);
+        Assert.Equal(s.UpgradePurchaseTimes["tier_Grandma_1"], loaded.UpgradePurchaseTimes["tier_Grandma_1"], 4);
+        // The two purchases happened at different game times — the ordering
+        // (which is what the "sort by recent" UI relies on) must survive.
+        Assert.True(loaded.UpgradePurchaseTimes["tier_Grandma_1"]
+                    > loaded.UpgradePurchaseTimes["tier_Cursor_1"]);
+    }
+
+    [Fact]
+    public void Migrate_V5Save_BackfillsUpgradePurchaseTimesFromGameTime()
+    {
+        // A v5 save has no UpgradePurchaseTimes; the migration must backfill
+        // every already-owned upgrade with the save's GameTime so the Stats
+        // dialog's "recent first" ordering has a stable base.
+        var v5Json = """
+        {
+          "Version": 5,
+          "Cookies": 100,
+          "TotalCookiesBaked": 100,
+          "AllTimeCookiesBaked": 100,
+          "GameTime": 512.5,
+          "BuildingCounts": {},
+          "PurchasedUpgrades": ["tier_Cursor_1", "tier_Grandma_1"],
+          "UnlockedAchievements": []
+        }
+        """;
+
+        var state = SaveSystem.DeserializeFromJson(v5Json);
+        Assert.Equal(2, state.UpgradePurchaseTimes.Count);
+        Assert.Equal(512.5, state.UpgradePurchaseTimes["tier_Cursor_1"], 4);
+        Assert.Equal(512.5, state.UpgradePurchaseTimes["tier_Grandma_1"], 4);
+    }
+
     // Expose ToSaveData for the test above without changing production visibility.
 }
 
