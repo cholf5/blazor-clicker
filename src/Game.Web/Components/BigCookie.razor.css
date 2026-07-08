@@ -17,6 +17,11 @@
     /* Original uses 0.1s ease-out on opacity and transform together. */
     transition: opacity 100ms ease-out, transform 100ms ease-out;
     user-select: none;
+    /* Mobile Chrome/WebView paints a translucent blue rectangle over any
+       tapped <button> via -webkit-tap-highlight-color. On the round cookie
+       that flash reads as a bug, so suppress it — the :active scale below
+       already provides press feedback. */
+    -webkit-tap-highlight-color: transparent;
     /* Sit above the decorative milk layer (z-index:1) so the cookie stays
        fully visible and clickable no matter how high the milk rises. */
     position: relative;
@@ -35,10 +40,6 @@
 
 .big-cookie:hover  { transform: scale(1.05); opacity: 0.9; }
 .big-cookie:active { transform: scale(0.98); opacity: 1;   }
-
-@media (max-width: 900px) {
-    .big-cookie-img { width: 10rem; height: 10rem; }
-}
 
 @media (max-width: 900px) {
     .big-cookie-img { width: 10rem; height: 10rem; }
