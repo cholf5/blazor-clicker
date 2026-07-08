@@ -9,7 +9,7 @@
         <div class="stats-bank-label">@Loc["ui.stats.cookies_unit"]</div>
     </div>
     <div class="stats-cps">
-        @Loc["ui.stats.per_second"] <strong>@NumberFormat.Format(State.CurrentCps())</strong>
+        @Loc["ui.stats.per_second"] <strong>@NumberFormat.FormatRate(State.CurrentCps())</strong>
     </div>
     <div class="stats-meta">
         <span title="@Loc["ui.stats.baked_title"]">@Loc.Format("ui.stats.baked", NumberFormat.Format(State.TotalCookiesBaked))</span>

@@ -69,6 +69,25 @@ public static class NumberFormat
         return scaled.ToString("0.000", CultureInfo.InvariantCulture) + Suffixes[tier];
     }
 
-    /// <summary>Format a rate, like "12.3 million cookies per second".</summary>
-    public static string FormatRate(double value) => Format(value);
+    /// <summary>
+    /// Format a rate, like "12.3 million cookies per second". Behaves like
+    /// <see cref="Format"/> everywhere except the sub-1 range: rates below one
+    /// keep a single decimal (e.g. 0.1 for a lone Cursor) instead of being
+    /// floored to "0", which is what <see cref="Format"/>'s whole-cookie policy
+    /// would otherwise produce. Values in [0.1, 1) are floored to a tenth so
+    /// the shown rate never exceeds the real one.
+    /// </summary>
+    public static string FormatRate(double value)
+    {
+        if (!double.IsFinite(value)) return value.ToString(CultureInfo.InvariantCulture);
+        if (value < 0) return "-" + FormatRate(-value);
+        if (value > 0 && value < 1)
+        {
+            var tenths = Math.Floor(value * 10) / 10;
+            // Anything below 0.1 (e.g. 0.05) still floors to "0" — that's honest
+            // and matches how the whole-cookie displays treat sub-unit values.
+            return tenths.ToString("0.0", CultureInfo.InvariantCulture);
+        }
+        return Format(value);
+    }
 }

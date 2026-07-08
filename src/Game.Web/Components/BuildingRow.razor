@@ -46,11 +46,11 @@ else
                 @if (owned > 0)
                 {
                     <span>@Loc.Format("ui.building.owns", owned)</span>
-                    <span>@Loc.Format("ui.building.cps_total", NumberFormat.Format(totalCps))</span>
+                    <span>@Loc.Format("ui.building.cps_total", NumberFormat.FormatRate(totalCps))</span>
                 }
                 else
                 {
-                    <span>@Loc.Format("ui.building.cps_each", NumberFormat.Format(unitCps))</span>
+                    <span>@Loc.Format("ui.building.cps_each", NumberFormat.FormatRate(unitCps))</span>
                 }
             </span>
         </span>
@@ -93,7 +93,7 @@ else
         var rows = new List<(string, string)>
         {
             ($"👛 {Loc["ui.building.owned"]}", owned.ToString()),
-            ($"⚡ {Loc["ui.building.each_produces"]}", Loc.Format("ui.unit.cps", NumberFormat.Format(unitCps))),
+            ($"⚡ {Loc["ui.building.each_produces"]}", Loc.Format("ui.unit.cps", NumberFormat.FormatRate(unitCps))),
         };
 
         // Once sugar lumps are unlocked, show the level row on EVERY building so
@@ -109,7 +109,7 @@ else
 
         if (owned > 0)
         {
-            rows.Add(($"📊 {Loc["ui.building.total_from"]}", Loc.Format("ui.unit.cps", NumberFormat.Format(totalCps))));
+            rows.Add(($"📊 {Loc["ui.building.total_from"]}", Loc.Format("ui.unit.cps", NumberFormat.FormatRate(totalCps))));
             var share = State.BuildingCpsShare(Definition.Id);
             if (share > 0)
             {
