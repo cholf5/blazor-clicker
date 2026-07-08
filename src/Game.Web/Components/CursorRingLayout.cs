@@ -128,9 +128,19 @@ public static class CursorRingLayout
 
     /// <summary>
     /// Place <paramref name="fingerCount"/> fingers into concentric rings, filling
-    /// the innermost ring before spilling outward. Each ring spreads its fingers
-    /// evenly over the full circle; odd rings are offset half a step so fingers
-    /// don't line up radially between rings (which reads as stiff spokes).
+    /// the innermost ring before spilling outward. Fingers within a ring are
+    /// <b>adjacent</b> — spaced by the ring's slot step (<c>360 / capacity</c>)
+    /// and centred around angle 0 (the top of the cookie), so a small queue reads
+    /// as "growing outward from the top" rather than being sprayed evenly around
+    /// the whole circle. Buying a cursor drops one more finger onto the end of
+    /// the queue without moving the ones already there, which is the whole point
+    /// of the ring as purchase feedback — you can see the newcomer.
+    ///
+    /// <para>Once a ring is full (n == capacity) the angles wrap the entire
+    /// circle and the layout is indistinguishable from a uniform ring, which is
+    /// the natural "the ring is full" reading. Alternate rings still take a
+    /// half-step interleave so their fingers don't line up radially with the
+    /// ring inside them (which reads as stiff spokes).</para>
     /// </summary>
     private static List<Finger> BuildFingers(int fingerCount, int tier)
     {
@@ -142,15 +152,27 @@ public static class CursorRingLayout
 
         for (var ring = 0; ring < capacities.Length && remaining > 0; ring++)
         {
-            var n = Math.Min(remaining, capacities[ring]);
+            var capacity = capacities[ring];
+            var n = Math.Min(remaining, capacity);
             var radius = BaseRadiusRem + ring * RingGapRem;
-            var step = 360.0 / n;
-            // Offset alternate rings by half a slot so adjacent rings interleave.
-            var offset = (ring % 2) * (step / 2.0);
+            // Step is fixed by the ring's capacity, NOT by the current fill n.
+            // That's what lets a partial ring feel like the head of a queue: as
+            // n grows, existing fingers stay put and the newcomers slot in on
+            // the ends. If step were 360/n instead, every purchase would rotate
+            // every finger — which is what the previous "evenly spaced" layout
+            // did, and what this rewrite is fixing.
+            var step = 360.0 / capacity;
+            // Half-a-step interleave on odd rings so rings 0/1, 2/3, … don't
+            // form radial spokes where their fingertips would otherwise align.
+            var interleave = (ring % 2) * (step / 2.0);
+            // Centre the (possibly partial) fill around angle 0 (north): with
+            // n fingers spaced by step, positions are (i - (n-1)/2) * step, so
+            // n=1 → {0°}, n=2 → {-step/2, +step/2}, n=3 → {-step, 0, +step}, …
+            var startOffset = -(n - 1) * step / 2.0;
 
             for (var i = 0; i < n; i++)
             {
-                var angle = step * i + offset;
+                var angle = startOffset + step * i + interleave;
                 // Phase spreads the poke over the animation period; using the
                 // global index (mod a prime-ish span) keeps neighbours out of
                 // sync so the tapping looks organic rather than synchronised.

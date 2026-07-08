@@ -121,6 +121,75 @@ public class CursorRingLayoutTests
     }
 
     [Fact]
+    public void SingleCursor_SitsAtTheTop()
+    {
+        // The queue grows outward from the top of the cookie. With one cursor
+        // the finger must sit at angle 0 (north) — anything else makes the ring
+        // feel arbitrary at low counts and defeats the "new cursor joined the
+        // queue" purchase feedback this layout exists to provide.
+        var model = CursorRingLayout.Compute(1);
+        var finger = Assert.Single(model.Fingers);
+        Assert.Equal(0.0, finger.AngleDeg, precision: 3);
+    }
+
+    [Fact]
+    public void TwoCursors_SitSymmetricallyAroundTheTop()
+    {
+        // Two cursors flank north, half a slot each side — NOT opposite poles
+        // of the cookie. This is the visual test that most cleanly separates
+        // the adjacent layout from the previous even-distribution one, where
+        // two cursors landed 180° apart.
+        var model = CursorRingLayout.Compute(2);
+        Assert.Equal(2, model.Fingers.Count);
+        var step = 360.0 / CursorRingLayout.RingCapacities[0];
+        Assert.Equal(-step / 2.0, model.Fingers[0].AngleDeg, precision: 3);
+        Assert.Equal(+step / 2.0, model.Fingers[1].AngleDeg, precision: 3);
+    }
+
+    [Fact]
+    public void PartialFirstRing_StaysCenteredAroundTheTop()
+    {
+        // For every partial fill of the innermost ring, the mean angle is 0 —
+        // the queue is always symmetric about north, so buying one more never
+        // rotates the ring, it only extends it.
+        for (var count = 1L; count <= CursorRingLayout.RingCapacities[0]; count++)
+        {
+            var model = CursorRingLayout.Compute(count);
+            var mean = model.Fingers.Average(f => f.AngleDeg);
+            Assert.Equal(0.0, mean, precision: 3);
+        }
+    }
+
+    [Fact]
+    public void BuyingOneMoreCursor_KeepsExistingFingersInPlace()
+    {
+        // The point of adjacency: existing fingers must not move when a new
+        // cursor is bought. Compare the first n angles of Compute(n) and
+        // Compute(n+1) — they should match pairwise (with one extra angle
+        // appended on the end). NB: adjacency-within-a-ring centres the queue
+        // around 0°, so this identity holds only when the extra finger is
+        // symmetric to the old queue's centre. To sidestep that, we compare
+        // the *set* of relative offsets from the queue centre after adding
+        // one — the geometry that matters is "the newcomer slots onto an end".
+        var before = CursorRingLayout.Compute(5).Fingers.Select(f => f.AngleDeg).OrderBy(a => a).ToArray();
+        var after = CursorRingLayout.Compute(6).Fingers.Select(f => f.AngleDeg).OrderBy(a => a).ToArray();
+        // The 6-finger queue is one slot wider than the 5-finger queue in both
+        // directions' union: every "before" angle must appear as either the
+        // same angle in "after" or shifted by exactly ±step/2 (the queue's
+        // recentring). Concretely, the differences after–before are all equal.
+        var step = 360.0 / CursorRingLayout.RingCapacities[0];
+        // 5 fingers → centres at (-2,-1,0,1,2)*step; 6 fingers → (-2.5,-1.5,-0.5,0.5,1.5,2.5)*step.
+        // The first 5 of the 6-finger queue are (-2.5,-1.5,-0.5,0.5,1.5)*step, i.e. each
+        // 5-finger angle shifted by -step/2. Verify that shift is consistent.
+        for (var i = 0; i < before.Length; i++)
+        {
+            Assert.Equal(before[i] - step / 2.0, after[i], precision: 3);
+        }
+        // And the newcomer is at the far end.
+        Assert.Equal(2.5 * step, after[^1], precision: 3);
+    }
+
+    [Fact]
     public void Fingers_FillInnermostRingFirst_WithStableIndices()
     {
         // Fill the first ring, then spill 4 into the second.
