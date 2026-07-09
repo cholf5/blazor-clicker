@@ -250,6 +250,71 @@ public class ProgressionTests
     }
 
     // ------------------------------------------------------------------
+    // Catch-up progress (tab backgrounded, not closed — full efficiency)
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void CatchUp_CreditsCookiesAtFullEfficiency()
+    {
+        var s = new GameState { Cookies = 10_000 };
+        s.BuyBuildingBulk(BuildingId.Grandma, 10); // 10 CPS
+        var cps = s.CurrentCpsRaw();
+        Assert.Equal(10, cps, 6);
+
+        var before = s.Cookies;
+        s.CatchUpProgress(60); // 1 minute backgrounded
+        // No 50% haircut, unlike ApplyOfflineProgress.
+        var expected = cps * 60;
+        Assert.Equal(before + expected, s.Cookies, 4);
+    }
+
+    [Fact]
+    public void CatchUp_AdvancesGameClock()
+    {
+        var s = new GameState { Cookies = 10_000 };
+        s.BuyBuildingBulk(BuildingId.Grandma, 5);
+        var before = s.GameTime;
+
+        s.CatchUpProgress(120);
+
+        Assert.Equal(before + 120, s.GameTime, 6);
+    }
+
+    [Fact]
+    public void CatchUp_DoesNotStretchExpiringFrenzyAcrossWindow()
+    {
+        var s = new GameState { Cookies = 10_000 };
+        s.BuyBuildingBulk(BuildingId.Grandma, 10); // 10 raw CPS
+        var raw = s.CurrentCpsRaw();
+
+        // A x7 Frenzy that expires almost immediately must not inflate a long
+        // catch-up window: catch-up credits raw CPS, and the buff is expired
+        // once the clock advances past it.
+        s.Buffs.Add(new ActiveBuff(GoldenCookieEffect.Frenzy, 7.0, s.GameTime + 1));
+
+        var before = s.Cookies;
+        s.CatchUpProgress(600); // 10 minutes
+
+        Assert.Equal(before + raw * 600, s.Cookies, 4);
+        Assert.Empty(s.Buffs); // the frenzy expired, not carried forward
+    }
+
+    [Fact]
+    public void CatchUp_NonPositiveIsNoOp()
+    {
+        var s = new GameState { Cookies = 500 };
+        s.BuyBuildingBulk(BuildingId.Grandma, 3);
+        var cookies = s.Cookies;
+        var time = s.GameTime;
+
+        s.CatchUpProgress(0);
+        s.CatchUpProgress(-10);
+
+        Assert.Equal(cookies, s.Cookies);
+        Assert.Equal(time, s.GameTime);
+    }
+
+    // ------------------------------------------------------------------
     // News queue
     // ------------------------------------------------------------------
 
