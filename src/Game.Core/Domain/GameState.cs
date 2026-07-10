@@ -204,6 +204,58 @@ public sealed class GameState
     }
 
     /// <summary>
+    /// Catch up on real time that elapsed while the tab was merely backgrounded
+    /// (not closed): the browser throttles background timers hard, so the game
+    /// loop stops ticking at 30fps and, when it fires again, hands us one large
+    /// gap. This credits that gap at <b>full</b> efficiency — the session never
+    /// actually ended, so unlike <see cref="ApplyOfflineProgress"/> there is no
+    /// 50% haircut and no minimum-report threshold.
+    ///
+    /// Why this is not just a big <see cref="Tick"/>:
+    /// <list type="bullet">
+    /// <item>Cookies are credited at <see cref="CurrentCpsRaw"/>, not
+    /// <see cref="CurrentCps"/>, so a temporary Frenzy that is about to expire
+    /// is not stretched across the whole away-window (same reasoning as offline
+    /// progress).</item>
+    /// <item>Golden cookies are not spawned/expired in a burst: the schedule is
+    /// simply pushed forward, mirroring <see cref="ApplyOfflineProgress"/>.</item>
+    /// </list>
+    /// </summary>
+    public void CatchUpProgress(double realSeconds)
+    {
+        if (realSeconds <= 0) return;
+
+        // Credit cookies at the pre-buff rate captured *before* advancing the
+        // clock (so buffs still active for this window are counted, but not
+        // stretched past their expiry).
+        var cps = CurrentCpsRaw();
+        if (cps > 0)
+        {
+            var gained = cps * realSeconds;
+            Cookies += gained;
+            AddBaked(gained);
+        }
+
+        // Advance the world clock and expire anything that timed out while away.
+        GameTime += realSeconds;
+        Buffs.RemoveAll(b => b.ExpiresAt <= GameTime);
+
+        // Ripen the pending sugar lump if its window passed.
+        if (!SugarLumpReady && AllTimeCookiesBaked >= ProgressionConfig.SugarLumpUnlockThreshold
+            && GameTime >= SugarLumpNextAt)
+        {
+            SugarLumpReady = true;
+            _newsMessages.Enqueue(NewsMessage.Of("news.event.sugar_ripe"));
+        }
+
+        // Don't dump a burst of golden cookies for the missed time; just resume
+        // the cadence shortly after we're back in the foreground.
+        if (_nextGoldenAt < GameTime) _nextGoldenAt = GameTime + 15 + _random.NextDouble() * 60;
+
+        CheckAchievements();
+    }
+
+    /// <summary>
     /// Simulate a period the player spent away from the tab. Grants a
     /// reduced-efficiency cookie yield and advances timers.
     /// </summary>
