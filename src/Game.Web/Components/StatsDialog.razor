@@ -545,7 +545,7 @@
                 (1 + State.MilkFactor() * up.EffectValue).ToString("0.##"),
                 (up.EffectValue * 100).ToString("0.##")),
         UpgradeEffectKind.CursorPerNonCursorBuilding =>
-            Loc.Format("ui.effect.cursor_synergy", NumberFormat.Format(up.EffectValue)),
+            Loc.Format("ui.effect.cursor_synergy", NumberFormat.FormatRate(up.EffectValue)),
         _ => up.DisplayDescription(Loc),
     };
 
